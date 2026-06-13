@@ -1,0 +1,952 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ChevronNexus - Local Wi-Fi Media Hub</title>
+    <link rel="stylesheet" href="/static/css/style.css">
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;600;700;800&family=Cinzel:wght@600;700;800&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+    <style>
+        /* Genshin Impact Epic Theme Styles */
+        body {
+            background-color: #0b0d19 !important;
+            font-family: 'Inter', sans-serif;
+            color: #ece5d8;
+            position: relative;
+            overflow-x: hidden;
+        }
+
+        /* Cinematic Background Particles / Parallax glow blobs */
+        body::before {
+            content: '';
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-image: 
+                radial-gradient(circle at 10% 20%, rgba(236, 192, 101, 0.03) 0%, transparent 40%),
+                radial-gradient(circle at 90% 80%, rgba(78, 240, 255, 0.03) 0%, transparent 45%);
+            z-index: -2;
+            pointer-events: none;
+        }
+
+        .container {
+            max-width: 1240px;
+            margin: 0 auto;
+            padding: 30px 20px;
+            display: flex;
+            flex-direction: column;
+            gap: 32px;
+        }
+
+        /* Header redesign */
+        .app-header.glass {
+            border: 1px solid rgba(236, 192, 101, 0.15);
+            background: rgba(18, 22, 38, 0.85);
+            border-radius: 8px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.5), inset 0 1px 0 rgba(255,255,255,0.05);
+            padding: 16px 28px;
+            position: relative;
+        }
+
+        /* Golden border accents on header */
+        .app-header.glass::after {
+            content: '';
+            position: absolute;
+            bottom: 4px;
+            left: 4px;
+            right: 4px;
+            height: 1px;
+            background: linear-gradient(90deg, transparent, rgba(236, 192, 101, 0.3), transparent);
+        }
+
+        .logo-text h1 {
+            font-family: 'Cinzel', serif;
+            font-weight: 700;
+            font-size: 1.6rem;
+            letter-spacing: 1px;
+            background: linear-gradient(135deg, #ffffff 10%, #ecc065 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            text-shadow: 0 0 15px rgba(236, 192, 101, 0.2);
+        }
+
+        .logo-text .subtitle {
+            font-size: 0.76rem;
+            color: #c5bdae;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            font-weight: 500;
+        }
+
+        /* Adventure profile badge */
+        .device-identity-card.glass-inset {
+            background: rgba(0, 0, 0, 0.3);
+            border: 1px solid rgba(236, 192, 101, 0.1);
+            padding: 8px 16px;
+            border-radius: 6px;
+            font-size: 0.82rem;
+            color: #ece5d8;
+        }
+
+        .device-badge {
+            background: #ecc065;
+            color: #0b0d19;
+            font-weight: 600;
+            text-transform: uppercase;
+            padding: 2px 6px;
+            border-radius: 3px;
+            font-size: 0.65rem;
+            margin-right: 8px;
+        }
+
+        .device-name-text {
+            font-weight: 500;
+            color: #ecc065;
+        }
+
+        .btn-edit-device {
+            color: #ecc065;
+        }
+
+        .btn-edit-device:hover {
+            color: #ffffff;
+            transform: scale(1.05);
+        }
+
+        /* Status compass display badge */
+        .status-badge.online {
+            color: #ecc065;
+            font-family: 'Outfit', sans-serif;
+        }
+
+        .pulse-dot {
+            background-color: #ecc065;
+            box-shadow: 0 0 8px #ecc065;
+            animation: pulse-dot-amber 2s infinite;
+        }
+
+        @keyframes pulse-dot-amber {
+            0% { box-shadow: 0 0 0 0 rgba(236, 192, 101, 0.6); }
+            70% { box-shadow: 0 0 0 8px rgba(236, 192, 101, 0); }
+            100% { box-shadow: 0 0 0 0 rgba(236, 192, 101, 0); }
+        }
+
+        .ip-link {
+            background: rgba(236, 192, 101, 0.05);
+            border: 1px solid rgba(236, 192, 101, 0.15);
+            color: #ecc065;
+        }
+
+        .ip-link:hover {
+            background: rgba(236, 192, 101, 0.15);
+            color: #ffffff;
+            border-color: #ecc065;
+        }
+
+        .btn-qr {
+            background: rgba(236, 192, 101, 0.1);
+            border: 1px solid rgba(236, 192, 101, 0.3);
+            color: #ecc065;
+        }
+
+        .btn-qr:hover {
+            background: #ecc065;
+            color: #0b0d19;
+            box-shadow: 0 0 15px rgba(236, 192, 101, 0.4);
+        }
+
+        /* Epic Cinematic Hero Area */
+        .genshin-hero {
+            background: linear-gradient(180deg, rgba(18, 22, 38, 0.5) 0%, rgba(11, 13, 25, 0.95) 100%), 
+                        radial-gradient(circle at center, rgba(236, 192, 101, 0.06) 0%, transparent 60%);
+            border: 1px solid rgba(236, 192, 101, 0.1);
+            border-radius: 12px;
+            padding: 44px 30px;
+            text-align: center;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 20px;
+            box-shadow: 0 15px 40px rgba(0,0,0,0.6);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .genshin-hero::after {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-image: 
+                linear-gradient(rgba(236, 192, 101, 0.01) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(236, 192, 101, 0.01) 1px, transparent 1px);
+            background-size: 25px 25px;
+            pointer-events: none;
+        }
+
+        .hero-banner-title {
+            font-family: 'Cinzel', serif;
+            font-size: 2.8rem;
+            font-weight: 800;
+            letter-spacing: 2px;
+            background: linear-gradient(180deg, #ffffff 40%, #e6cb95 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            text-shadow: 0 4px 10px rgba(0,0,0,0.8);
+        }
+
+        .hero-banner-subtitle {
+            font-size: 0.95rem;
+            color: #c5bdae;
+            text-transform: uppercase;
+            letter-spacing: 3px;
+            font-weight: 600;
+        }
+
+        .hero-theater-badge {
+            background: #e50914;
+            border: 1px solid rgba(255,255,255,0.1);
+            padding: 12px 28px;
+            border-radius: 4px;
+            color: #ffffff;
+            font-weight: 700;
+            font-size: 0.9rem;
+            letter-spacing: 1.5px;
+            box-shadow: 0 0 20px rgba(229, 9, 20, 0.4);
+            display: inline-flex;
+            align-items: center;
+            gap: 10px;
+            transition: all var(--transition-normal);
+            margin-top: 10px;
+        }
+
+        .hero-theater-badge:hover {
+            background: #ffffff;
+            color: #e50914;
+            box-shadow: 0 0 30px rgba(255, 255, 255, 0.6);
+            transform: translateY(-2px);
+        }
+
+        /* Summon portal dropzone */
+        .upload-section.glass {
+            background: rgba(18, 22, 38, 0.7);
+            border: 1px solid rgba(236, 192, 101, 0.15);
+            border-radius: 12px;
+            padding: 30px;
+            box-shadow: 0 15px 35px rgba(0,0,0,0.5);
+        }
+
+        .dropzone {
+            border: 2px dashed rgba(236, 192, 101, 0.25);
+            background: rgba(0, 0, 0, 0.2);
+            border-radius: 8px;
+            transition: all var(--transition-normal);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .dropzone::before {
+            content: '';
+            position: absolute;
+            width: 140px;
+            height: 140px;
+            background: radial-gradient(circle, rgba(236, 192, 101, 0.08) 0%, transparent 70%);
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            border-radius: 50%;
+            pointer-events: none;
+            transition: all var(--transition-normal);
+        }
+
+        .dropzone.dragover {
+            border-color: #ecc065;
+            background: rgba(236, 192, 101, 0.06);
+            box-shadow: inset 0 0 20px rgba(236, 192, 101, 0.15);
+        }
+
+        .dropzone.dragover::before {
+            background: radial-gradient(circle, rgba(236, 192, 101, 0.2) 0%, transparent 70%);
+            width: 200px;
+            height: 200px;
+        }
+
+        .upload-icon {
+            color: #ecc065;
+            filter: drop-shadow(0 0 8px rgba(236, 192, 101, 0.3));
+        }
+
+        .dropzone h3 {
+            font-family: 'Cinzel', serif;
+            font-weight: 700;
+            color: #ffffff;
+            font-size: 1.3rem;
+            letter-spacing: 0.5px;
+            margin-bottom: 6px;
+        }
+
+        .dropzone p {
+            color: #c5bdae;
+            font-size: 0.9rem;
+        }
+
+        .dropzone .badge {
+            background: rgba(236, 192, 101, 0.08);
+            border: 1px solid rgba(236, 192, 101, 0.2);
+            color: #ecc065;
+        }
+
+        /* Adventure Codex Media Gallery */
+        .gallery-toolbar.glass {
+            background: rgba(18, 22, 38, 0.8);
+            border: 1px solid rgba(236, 192, 101, 0.15);
+            border-radius: 8px;
+        }
+
+        .filter-group {
+            background: rgba(0, 0, 0, 0.25);
+            border: 1px solid rgba(236, 192, 101, 0.1);
+        }
+
+        .filter-btn {
+            color: #c5bdae;
+            font-family: 'Outfit', sans-serif;
+            text-transform: uppercase;
+            font-size: 0.8rem;
+            letter-spacing: 0.5px;
+        }
+
+        .filter-btn:hover {
+            color: #ffffff;
+        }
+
+        .filter-btn.active {
+            background: rgba(236, 192, 101, 0.12);
+            color: #ecc065;
+            border-color: rgba(236, 192, 101, 0.3);
+        }
+
+        .search-box input, .select-wrapper select {
+            background: rgba(0, 0, 0, 0.25);
+            border: 1px solid rgba(236, 192, 101, 0.15);
+            color: #ffffff;
+        }
+
+        .search-box input:focus, .select-wrapper select:focus {
+            border-color: #ecc065;
+            box-shadow: 0 0 10px rgba(236, 192, 101, 0.2);
+        }
+
+        /* Showcase Cards (Genshin Artifact Card Redesign) */
+        .media-card.glass {
+            background: linear-gradient(180deg, #16192b 0%, #0e111f 100%);
+            border: 1px solid rgba(236, 192, 101, 0.15);
+            border-radius: 8px;
+            box-shadow: 0 8px 20px rgba(0,0,0,0.4);
+            transition: all var(--transition-normal);
+        }
+
+        .media-card.glass:hover {
+            transform: translateY(-5px);
+            border-color: #ecc065;
+            box-shadow: 0 12px 30px rgba(236, 192, 101, 0.15);
+        }
+
+        .card-preview {
+            background: #090a12;
+            position: relative;
+        }
+
+        /* Elemental / Category Badges */
+        .media-card::after {
+            content: '✦';
+            position: absolute;
+            top: 8px;
+            left: 10px;
+            color: #ecc065;
+            font-size: 1.1rem;
+            text-shadow: 0 0 5px #ecc065;
+            z-index: 10;
+        }
+
+        /* Photo as Cyan element tag, Video as Ruby element tag */
+        .media-card .card-preview::after {
+            content: '';
+            position: absolute;
+            top: 8px;
+            right: 8px;
+            width: 24px;
+            height: 24px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.65rem;
+            font-weight: 700;
+            color: #ffffff;
+            box-shadow: 0 0 8px rgba(0,0,0,0.5);
+            z-index: 10;
+        }
+
+        .media-card[data-category="photo"] .card-preview::after {
+            background: #4ef0ff;
+            box-shadow: 0 0 8px #4ef0ff;
+            content: '✨';
+        }
+
+        .media-card[data-category="video"] .card-preview::after {
+            background: #ff3344;
+            box-shadow: 0 0 8px #ff3344;
+            content: '🔥';
+        }
+
+        .card-details {
+            background: rgba(18, 22, 38, 0.85);
+            border-top: 1px solid rgba(236, 192, 101, 0.12);
+            padding: 14px;
+        }
+
+        .card-name {
+            font-family: 'Outfit', sans-serif;
+            font-size: 0.95rem;
+            color: #ffffff;
+            font-weight: 600;
+        }
+
+        .card-meta {
+            color: #c5bdae;
+            font-size: 0.76rem;
+            font-weight: 500;
+        }
+
+        /* Player Stats Mock metadata */
+        .card-uploader-row {
+            font-size: 0.72rem;
+            color: #ecc065;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            margin-top: 6px;
+        }
+
+        .uploader-icon-svg {
+            color: #ecc065;
+            width: 14px;
+            height: 14px;
+        }
+
+        /* Lightbox fantasy frame styling */
+        .lightbox-content {
+            border: 2px solid rgba(236, 192, 101, 0.35);
+            border-radius: 8px;
+            box-shadow: 0 0 40px rgba(236, 192, 101, 0.15);
+            overflow: hidden;
+            background: #05060b;
+        }
+
+        .lightbox-footer {
+            border-top: 1px solid rgba(236, 192, 101, 0.2);
+            background: rgba(11, 13, 25, 0.95);
+        }
+
+        .lightbox-info h4 {
+            color: #ecc065;
+            font-family: 'Outfit', sans-serif;
+        }
+
+        /* Adventure Status compass popup */
+        .modal.glass {
+            border: 1px solid rgba(236, 192, 101, 0.3);
+            background: rgba(18, 22, 38, 0.95);
+            box-shadow: 0 20px 50px rgba(0,0,0,0.8), 0 0 30px rgba(236, 192, 101, 0.1);
+        }
+
+        .modal-header h3 {
+            font-family: 'Cinzel', serif;
+            color: #ecc065;
+        }
+
+        .domain-shortcut-text {
+            color: #ecc065;
+            font-family: 'Outfit', sans-serif;
+        }
+
+        /* Custom Cursor follow element styles (Genshin Theme matched) */
+        .custom-cursor {
+            width: 20px;
+            height: 20px;
+            border: 2px solid #ecc065;
+            border-radius: 50%;
+            position: fixed;
+            pointer-events: none;
+            z-index: 10000;
+            margin-left: -10px;
+            margin-top: -10px;
+            box-shadow: 0 0 10px rgba(236, 192, 101, 0.4);
+            opacity: 0;
+            top: 0;
+            left: 0;
+            will-change: transform;
+            transform: translate3d(-100px, -100px, 0) scale(1);
+            transition: opacity 0.3s ease, border-color 0.25s ease, background-color 0.25s ease, box-shadow 0.25s ease;
+        }
+
+        /* Active hover sizing */
+        .custom-cursor.hovering {
+            border-color: #ffffff;
+            box-shadow: 0 0 15px rgba(255, 255, 255, 0.6);
+            background: rgba(236, 192, 101, 0.08);
+        }
+    </style>
+</head>
+<body>
+    <!-- Background Decoration -->
+    <div class="bg-glow bg-glow-1"></div>
+    <div class="bg-glow bg-glow-2"></div>
+
+    <div class="container">
+        <!-- HEADER -->
+        <header class="app-header glass">
+            <div class="header-logo">
+                <img src="/static/logo.jpg" alt="ChevronNexus Logo" style="width: 42px; height: 42px; object-fit: cover; border-radius: var(--radius-sm); border: 1px solid rgba(236, 192, 101, 0.3); box-shadow: 0 0 12px rgba(236,192,101,0.25);">
+                <div class="logo-text">
+                    <h1>ChevronNexus</h1>
+                    <p class="subtitle">Secure Local Media Share</p>
+                </div>
+            </div>
+
+            <!-- Traveler Greeting & Device Customizer -->
+            <div style="display: flex; align-items: center; gap: 16px;">
+                <span class="user-greeting" style="font-family: 'Outfit', sans-serif; font-size: 0.9rem; color: #ece5d8; font-weight: 500;">
+                    User: <span id="display-user-greeting" style="color: #ecc065; font-weight: 700;">Admin</span>
+                </span>
+                
+                <div class="device-identity-card glass-inset" id="device-identity-container">
+                    <div class="device-identity-display" id="device-display-box">
+                        <span class="device-badge">Device</span>
+                        <span class="device-name-text" id="display-device-name">Detecting...</span>
+                        <button class="btn-edit-device" id="edit-device-btn" title="Rename Device">
+                            <svg viewBox="0 0 24 24" class="icon" fill="none" stroke="currentColor" stroke-width="2" style="width: 14px; height: 14px;">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M16.862 4.487l1.687-1.688a1.875 1.875 0 112.652 2.652L10.582 16.07a4.5 4.5 0 01-1.897 1.13L6 18l.8-2.685a4.5 4.5 0 011.13-1.897l8.932-8.931zm0 0L19.5 7.125M18 14v4.75A2.25 2.25 0 0115.75 21H5.25A2.25 2.25 0 013 18.75V8.25A2.25 2.25 0 015.25 6H10" />
+                            </svg>
+                        </button>
+                    </div>
+                    <div class="device-edit-form hidden" id="device-edit-form">
+                        <input type="text" id="device-name-input" maxlength="20" placeholder="Enter name...">
+                        <button class="btn btn-success btn-sm" id="save-device-btn">Save</button>
+                        <button class="btn-cancel-device" id="cancel-device-btn" title="Cancel">&times;</button>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="connection-hub">
+                <div class="ip-info-container">
+                    <span class="status-badge online">
+                        <span class="pulse-dot"></span>
+                        Wifi Connection Active
+                    </span>
+                    <span class="speed-badge" id="speed-meter" style="background: rgba(236, 192, 101, 0.08); border: 1px solid rgba(236, 192, 101, 0.15); color: #ecc065; padding: 4px 10px; border-radius: 4px; font-family: monospace; font-size: 0.75rem; margin-left: 8px; display: inline-flex; align-items: center; gap: 4px; vertical-align: middle;">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width: 13px; height: 13px; color: #ecc065; vertical-align: middle;">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M15.3 10.3a5 5 0 011.4 3.7m-9.4 0a5 5 0 011.4-3.7m3.3-3.3a8 8 0 014 0m-8 3.3a3 3 0 014 0m-4 7.4l2-6m2 6l-2-6" />
+                        </svg>
+                        <span id="speed-meter-val">Checking Ping...</span>
+                    </span>
+                    <div class="ip-addresses" id="ip-list">
+                        Detecting connection...
+                    </div>
+                </div>
+                <button class="btn btn-primary btn-qr" id="open-qr-btn" title="Show Connection QR Code">
+                    <svg viewBox="0 0 24 24" class="icon" fill="none" stroke="currentColor" stroke-width="2">
+                        <rect x="3" y="3" width="7" height="7" rx="1" />
+                        <rect x="14" y="3" width="7" height="7" rx="1" />
+                        <rect x="14" y="14" width="7" height="7" rx="1" />
+                        <rect x="3" y="14" width="7" height="7" rx="1" />
+                        <path stroke-linecap="round" d="M7 7h.01M17 7h.01M7 17h.01M17 14v3M14 17h3" />
+                    </svg>
+                    <span>Connect</span>
+                </button>
+                <button class="btn btn-primary btn-qr" id="open-remote-qr-btn" title="Show TV Remote pairing QR Code" style="background: rgba(236, 192, 101, 0.1); border: 1px solid rgba(236, 192, 101, 0.3); color: #ecc065; display: inline-flex; align-items: center; gap: 8px;">
+                    <svg viewBox="0 0 24 24" class="icon" fill="none" stroke="currentColor" stroke-width="2" style="width: 16px; height: 16px;">
+                        <rect x="5" y="2" width="14" height="20" rx="2" ry="2" />
+                        <line x1="12" y1="18" x2="12" y2="18.01" />
+                    </svg>
+                    <span>Remote: <strong id="remote-code-display">----</strong></span>
+                </button>
+                <button class="btn btn-danger btn-logout" id="logout-btn" title="Log Out Session">
+                    <svg viewBox="0 0 24 24" class="icon" fill="none" stroke="currentColor" stroke-width="2">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M15.75 9V5.25A2.25 2.25 0 0013.5 3h-6a2.25 2.25 0 00-2.25 2.25v13.5A2.25 2.25 0 007.5 21h6a2.25 2.25 0 002.25-2.25V15M12 9l-3 3m0 0l3 3m-3-3h12.75" />
+                    </svg>
+                    <span>Logout</span>
+                </button>
+            </div>
+        </header>
+
+        <!-- Cinematic Fantasy Hero Banner (Genshin Style) -->
+        <div class="genshin-hero animate-scale">
+            <div class="hero-banner-subtitle">OFFLINE WI-FI MEDIA PORTAL</div>
+            <h2 class="hero-banner-title">Chevron Nexus-Home</h2>
+            <p style="max-width: 620px; font-size: 0.98rem; line-height: 1.6; color: #ece5d8; opacity: 0.85; margin: 0;">
+                Mount your local domain, upload high-speed files without limits, and navigate your cinematic movies dynamically with maximum local Wi-Fi speeds.
+            </p>
+            <a href="/theater" class="hero-theater-badge" title="Open Movie Theater Domain">
+                <span class="pulse-dot" style="background-color:#ffffff; box-shadow: 0 0 8px #ffffff; width:6px; height:6px;"></span>
+                <span>ENTER THEATER DOMAIN 🎥</span>
+            </a>
+        </div>
+
+        <!-- FILES HUB VIEW SECTION -->
+        <div id="section-files-hub" class="section-container">
+            <!-- UPLOAD SECTION -->
+            <section class="upload-section glass">
+                <div class="dropzone" id="dropzone">
+                    <input type="file" id="file-input" multiple accept="image/*,video/*" class="file-input-hidden">
+                    <div class="dropzone-content">
+                        <svg viewBox="0 0 24 24" class="upload-icon" fill="none" stroke="currentColor" stroke-width="1.5" style="width: 50px; height: 50px; margin-bottom: 12px;">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M12 16.5V9.75m0 0l3 3m-3-3l-3 3" />
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M2.25 18V9A2.25 2.25 0 014.5 6.75h3.181a2.25 2.25 0 011.607.659l1.196 1.196a2.25 2.25 0 001.608.659h6.158A2.25 2.25 0 0121.75 11v7a2.25 2.25 0 01-2.25 2.25H4.5A2.25 2.25 0 012.25 18z" />
+                        </svg>
+                        <h3>Initiate Local Upload Portal</h3>
+                        <p>Drag & Drop Photos & Videos or click to browse</p>
+                        <span class="badge">Supports large video files</span>
+                    </div>
+                </div>
+
+                <!-- Upload Queue list -->
+                <div class="upload-queue-container hidden" id="upload-queue-container">
+                    <div class="queue-header">
+                        <h4 style="font-family: 'Outfit', sans-serif; color: #ecc065;">Active Uploads (<span id="queue-count">0</span>)</h4>
+                        <div class="queue-actions">
+                            <button class="btn btn-secondary btn-sm" id="clear-queue-btn">Cancel All</button>
+                            <button class="btn btn-success btn-sm" id="upload-all-btn">
+                                <svg viewBox="0 0 24 24" class="icon" fill="none" stroke="currentColor" stroke-width="2">
+                                    <path stroke-linecap="round" stroke-linejoin="round" d="M4.5 12.75l6 6 9-13.5" />
+                                </svg>
+                                Upload
+                            </button>
+                        </div>
+                    </div>
+                    
+                    <div class="upload-queue" id="upload-queue">
+                        <!-- Queue items populated by JS -->
+                    </div>
+                    
+                    <!-- Overall Progress -->
+                    <div class="overall-progress-bar hidden" id="overall-progress-container">
+                        <div class="progress-bar-track">
+                            <div class="progress-bar-fill" id="overall-progress-fill"></div>
+                        </div>
+                        <div class="progress-labels">
+                            <span id="overall-progress-text">Uploading... 0%</span>
+                            <span id="overall-progress-speed">0 KB/s</span>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- GALLERY SECTION -->
+            <section class="gallery-section">
+                <div class="gallery-toolbar glass">
+                    <!-- Filters -->
+                    <div class="filter-group">
+                        <button class="filter-btn active" data-filter="all">All Items</button>
+                        <button class="filter-btn" data-filter="photo">Photos</button>
+                        <button class="filter-btn" data-filter="video">Videos</button>
+                    </div>
+
+                    <!-- Controls: Search, Sort -->
+                    <div class="control-group">
+                        <div class="search-box">
+                            <svg viewBox="0 0 24 24" class="search-icon" fill="none" stroke="currentColor" stroke-width="2">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-5.197-5.197m0 0A7.5 7.5 0 105.196 5.196a7.5 7.5 0 0010.607 10.607z" />
+                            </svg>
+                            <input type="text" id="search-input" placeholder="Search archive...">
+                        </div>
+
+                        <div class="select-wrapper">
+                            <select id="uploader-select">
+                                <option value="all">All Travelers</option>
+                                <!-- Dynamically populated -->
+                            </select>
+                        </div>
+
+                        <div class="select-wrapper">
+                            <select id="sort-select">
+                                <option value="newest">Newest First</option>
+                                <option value="oldest">Oldest First</option>
+                                <option value="name_asc">Name (A-Z)</option>
+                                <option value="name_desc">Name (Z-A)</option>
+                                <option value="size_desc">Largest Size</option>
+                                <option value="size_asc">Smallest Size</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Media Grid -->
+                <div class="media-grid-wrapper">
+                    <div class="media-grid" id="media-grid">
+                        <!-- Media cards populated by JS -->
+                    </div>
+                    
+                    <!-- Empty State -->
+                    <div class="empty-state hidden" id="empty-state">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" style="color:#ecc065; opacity:0.8; width: 44px; height: 44px;">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M2.25 15.75l5.159-5.159a2.25 2.25 0 013.182 0l5.159 5.159m-1.5-1.5l1.409-1.409a2.25 2.25 0 013.182 0l2.909 2.909m-18 3.75h16.5a1.5 1.5 0 001.5-1.5V6a1.5 1.5 0 00-1.5-1.5H3.75A1.5 1.5 0 002.25 6v12a1.5 1.5 0 001.5 1.5zm10.5-11.25h.008v.008h-.008V8.25zm.375 0a.375.375 0 11-.75 0 .375.375 0 01.75 0z" />
+                        </svg>
+                        <h3>Archive is empty</h3>
+                        <p>Summon files into the dropzone above to store them locally.</p>
+                    </div>
+
+                    <!-- Loading State -->
+                    <div class="loading-state" id="loading-state">
+                        <div class="spinner" style="border-top-color:#ecc065;"></div>
+                        <p>Scanning local storage archive...</p>
+                    </div>
+                </div>
+            </section>
+        </div>
+    </div>
+
+    <!-- MODAL: QR CODE -->
+    <div class="modal-backdrop" id="qr-modal">
+        <div class="modal glass animate-scale">
+            <div class="modal-header">
+                <h3>Summon Device Portal</h3>
+                <button class="modal-close" id="close-qr-btn" aria-label="Close modal">&times;</button>
+            </div>
+            <div class="modal-body qr-modal-body">
+                <p>Scan this QR code with your phone/tablet to open ChevronNexus instantly:</p>
+                <div class="qr-wrapper">
+                    <div id="qrcode"></div>
+                </div>
+                <div class="qr-instructions">
+                    <p>Access the server locally via domain shortcut:</p>
+                    <div style="display: flex; align-items: center; justify-content: center; gap: 8px; margin-top: 4px; margin-bottom: 8px;">
+                        <a href="http://chevronnexus.com" target="_blank" class="domain-shortcut-text" id="display-shortcut-url" style="color: #ecc065; text-decoration: underline; font-weight: bold;">http://chevronnexus.com</a>
+                        <button class="btn btn-secondary btn-sm" id="btn-copy-domain" style="padding: 2px 8px; font-size: 0.72rem; height: auto; border-radius: 3px;">Copy</button>
+                    </div>
+                    
+                    <div class="ip-selector-wrapper" style="margin-top: 12px; margin-bottom: 12px; width: 100%; display: flex; flex-direction: column; gap: 6px; text-align: left;">
+                        <label for="ip-interface-select" style="font-size: 0.78rem; color: #c5bdae; font-weight: 600;">Choose Network Interface:</label>
+                        <select id="ip-interface-select" style="background: rgba(0, 0, 0, 0.25); border: 1px solid rgba(236, 192, 101, 0.15); color: #ffffff; padding: 6px 10px; border-radius: 4px; outline: none; width: 100%; font-family: monospace; font-size: 0.82rem;">
+                            <!-- Dynamically populated -->
+                        </select>
+                    </div>
+
+                    <div class="ip-fallback-text" style="font-size: 0.78rem; color: var(--text-muted); margin-top: 8px; display: flex; align-items: center; justify-content: center; gap: 8px;">
+                        IP Address fallback: <span id="active-network-ip" style="font-family: monospace; color: var(--text-secondary);">http://localhost:5000</span>
+                        <button class="btn btn-secondary btn-sm" id="btn-copy-fallback" style="padding: 2px 8px; font-size: 0.72rem; height: auto; border-radius: 3px;">Copy</button>
+                    </div>
+                </div>
+                <div class="hosts-helper-box" style="background: rgba(0, 0, 0, 0.3); border: 1px solid rgba(236, 192, 101, 0.15); padding: 12px; border-radius: var(--radius-sm); font-size: 0.8rem; text-align: left; width: 100%;">
+                    <h5 style="color: #ecc065; margin-bottom: 6px; font-weight: 600;">💡 Custom URL Setup (Optional)</h5>
+                    <p style="color: #c5bdae; line-height: 1.4; margin-bottom: 8px;">To connect via <code>chevronnexus.com</code> instead of typing IP addresses, map the server's IP in your router DNS settings, or add this line to your device's <code>hosts</code> file:</p>
+                    <code id="hosts-mapping-line" style="display: block; background: rgba(0,0,0,0.3); padding: 6px 10px; border-radius: 4px; font-family: monospace; color: var(--success-light); font-size: 0.82rem; border: 1px solid rgba(236, 192, 101, 0.15); user-select: all;">192.168.1.100 chevronnexus.com</code>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL: REMOTE PAIRING QR CODE -->
+    <div class="modal-backdrop" id="remote-qr-modal">
+        <div class="modal glass animate-scale" style="background: rgba(11, 13, 25, 0.9); border: 1px solid rgba(236, 192, 101, 0.25); box-shadow: 0 20px 40px rgba(0,0,0,0.8);">
+            <div class="modal-header" style="border-bottom: 1px solid rgba(236, 192, 101, 0.15); padding-bottom: 12px; margin-bottom: 16px;">
+                <h3 style="color: #ecc065; font-weight: 700; margin: 0; font-family: 'Outfit', sans-serif; display: flex; align-items: center; gap: 8px;">
+                    <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" style="color: #ecc065;">
+                        <rect x="5" y="2" width="14" height="20" rx="2" ry="2" />
+                        <line x1="12" y1="18" x2="12" y2="18.01" />
+                    </svg>
+                    TV Remote Pairing
+                </h3>
+                <button class="modal-close" id="close-remote-qr-btn" aria-label="Close modal">&times;</button>
+            </div>
+            <div class="modal-body qr-modal-body" style="display: flex; flex-direction: column; align-items: center; text-align: center; gap: 16px;">
+                <p style="color: #c5bdae; font-size: 0.88rem; margin: 0; line-height: 1.4;">Scan this QR code with your phone/tablet to instantly pair as a remote controller:</p>
+                <div class="qr-wrapper" style="background: white; padding: 12px; border-radius: 8px; box-shadow: 0 4px 12px rgba(0,0,0,0.5); display: flex; align-items: center; justify-content: center;">
+                    <div id="remote-qrcode"></div>
+                </div>
+                <div class="qr-instructions" style="background: rgba(0, 0, 0, 0.25); border: 1px solid rgba(236, 192, 101, 0.15); padding: 12px; border-radius: 8px; font-size: 0.82rem; width: 100%; display: flex; flex-direction: column; gap: 10px; text-align: left;">
+                    <div class="ip-selector-wrapper" style="display: flex; flex-direction: column; gap: 6px;">
+                        <label for="remote-ip-interface-select" style="font-size: 0.78rem; color: #c5bdae; font-weight: 600;">Server IP / Interface (LAN):</label>
+                        <select id="remote-ip-interface-select" style="background: rgba(0, 0, 0, 0.4); border: 1px solid rgba(236, 192, 101, 0.2); color: #ffffff; padding: 8px 10px; border-radius: 4px; outline: none; width: 100%; font-family: monospace; font-size: 0.82rem; cursor: pointer;">
+                            <!-- Dynamically populated -->
+                        </select>
+                    </div>
+                    <div style="display: flex; flex-direction: column; gap: 4px; margin-top: 4px;">
+                        <span style="font-size: 0.78rem; color: #c5bdae; font-weight: 600;">Pairing URL:</span>
+                        <div style="display: flex; align-items: center; gap: 8px; background: rgba(0,0,0,0.3); border: 1px solid rgba(255,255,255,0.05); padding: 6px 10px; border-radius: 4px;">
+                            <span id="remote-pairing-url-text" style="font-family: monospace; color: #ecc065; font-size: 0.78rem; word-break: break-all; flex-grow: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">Loading url...</span>
+                            <button class="btn btn-secondary btn-sm" id="btn-copy-remote-url" style="padding: 2px 8px; font-size: 0.72rem; height: auto; border-radius: 3px; background: rgba(236, 192, 101, 0.15); border: 1px solid rgba(236, 192, 101, 0.3); color: #ecc065; transition: all 0.2s; cursor: pointer;">Copy</button>
+                        </div>
+                    </div>
+                    <div style="font-size: 0.75rem; color: #9ca3af; text-align: center; margin-top: 4px; line-height: 1.4;">
+                        Ensure your remote device is connected to the same Wi-Fi/LAN network.
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL: LIGHTBOX -->
+    <div class="lightbox" id="lightbox">
+        <button class="lightbox-close" id="lightbox-close-btn" aria-label="Close lightbox">&times;</button>
+        <button class="lightbox-nav lightbox-prev" id="lightbox-prev-btn" aria-label="Previous file">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M15.75 19.5L8.25 12l7.5-7.5" />
+            </svg>
+        </button>
+        <button class="lightbox-nav lightbox-next" id="lightbox-next-btn" aria-label="Next file">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M8.25 4.5l7.5 7.5-7.5 7.5" />
+            </svg>
+        </button>
+
+        <div class="lightbox-content" id="lightbox-content">
+            <!-- Rendered Image or Video by JS -->
+        </div>
+
+        <div class="lightbox-footer">
+            <div class="lightbox-info">
+                <h4 id="lightbox-filename">file.jpg</h4>
+                <p id="lightbox-meta">Size: 0 MB • Uploaded: Just now</p>
+            </div>
+            <div class="lightbox-actions">
+                <a href="#" download id="lightbox-download-btn" class="btn btn-secondary btn-sm" title="Download">
+                    <svg viewBox="0 0 24 24" class="icon" fill="none" stroke="currentColor" stroke-width="2">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5M16.5 12L12 16.5m0 0L7.5 12m4.5 4.5V3" />
+                    </svg>
+                    <span>Download</span>
+                </a>
+                <button id="lightbox-delete-btn" class="btn btn-danger btn-sm" title="Delete">
+                    <svg viewBox="0 0 24 24" class="icon" fill="none" stroke="currentColor" stroke-width="2">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M14.74 9l-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 01-2.244 2.077H8.084a2.25 2.25 0 01-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 00-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m0 0a48.11 48.11 0 013.478-.397m7.5 0v-.916c0-1.18-.91-2.164-2.09-2.201a51.964 51.964 0 00-3.32 0c-1.18.037-2.09 1.022-2.09 2.201v.916m7.5 0a48.667 48.667 0 00-7.5 0" />
+                    </svg>
+                    <span>Delete</span>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- TOAST NOTIFICATION CONTAINER -->
+    <div class="toast-container" id="toast-container"></div>
+
+    <!-- Custom Cursor follow ring -->
+    <div class="custom-cursor" id="custom-cursor"></div>
+
+    <!-- SCRIPT INCLUSION -->
+    <script src="/static/js/qrcode.min.js"></script>
+    <script src="/static/js/app.js"></script>
+    <script>
+        // Update uploader tag display dynamically to say "Traveler"
+        document.addEventListener('DOMContentLoaded', function() {
+            var upSelect = document.getElementById('uploader-select');
+            if (upSelect) {
+                // Ensure placeholder option text matches theme
+                upSelect.options[0].textContent = 'All Travelers';
+            }
+
+            // Smooth mouse follow cursor script
+            var cursor = document.getElementById('custom-cursor');
+            var mouseX = -100;
+            var mouseY = -100;
+            var cursorX = -100;
+            var cursorY = -100;
+            var currentScale = 1;
+            var targetScale = 1;
+            var isRunning = false;
+            var initialized = false;
+
+            document.addEventListener('mousemove', function(e) {
+                mouseX = e.clientX;
+                mouseY = e.clientY;
+                cursor.style.opacity = '1';
+                
+                if (!initialized) {
+                    cursorX = mouseX;
+                    cursorY = mouseY;
+                    cursor.style.transform = 'translate3d(' + cursorX + 'px, ' + cursorY + 'px, 0) scale(' + currentScale + ')';
+                    initialized = true;
+                }
+
+                if (!isRunning) {
+                    isRunning = true;
+                    lastTime = performance.now();
+                    requestAnimationFrame(tick);
+                }
+            });
+
+            document.addEventListener('mouseleave', function() {
+                cursor.style.opacity = '0';
+                initialized = false;
+            });
+
+            var lastTime = performance.now();
+            function tick(now) {
+                if (!initialized) {
+                    isRunning = false;
+                    return;
+                }
+
+                var dt = Math.min(3, (now - lastTime) / 8.333); // Normalized to 120Hz frame time (8.333ms)
+                lastTime = now;
+                
+                var dx = mouseX - cursorX;
+                var dy = mouseY - cursorY;
+                var ds = targetScale - currentScale;
+                
+                // Stop the RAF loop if we're close enough to the target coordinates and scale
+                if (Math.abs(dx) < 0.1 && Math.abs(dy) < 0.1 && Math.abs(ds) < 0.01) {
+                    cursorX = mouseX;
+                    cursorY = mouseY;
+                    currentScale = targetScale;
+                    cursor.style.transform = 'translate3d(' + cursorX + 'px, ' + cursorY + 'px, 0) scale(' + currentScale + ')';
+                    isRunning = false;
+                    return;
+                }
+                
+                var speed = 0.15;
+                var factor = 1 - Math.pow(1 - speed, dt);
+                
+                cursorX += dx * factor;
+                cursorY += dy * factor;
+                currentScale += ds * factor;
+                
+                cursor.style.transform = 'translate3d(' + cursorX + 'px, ' + cursorY + 'px, 0) scale(' + currentScale + ')';
+                
+                requestAnimationFrame(tick);
+            }
+
+            // Sizing on link/button interactions using event delegation
+            document.addEventListener('mouseover', function(e) {
+                var target = e.target.closest('a, button, input, select, .dropzone, .media-card, .filter-btn, [role="button"], .lightbox-nav, .lightbox-close');
+                if (target) {
+                    targetScale = 1.6;
+                    cursor.classList.add('hovering');
+                    if (!isRunning) {
+                        isRunning = true;
+                        lastTime = performance.now();
+                        requestAnimationFrame(tick);
+                    }
+                }
+            });
+
+            document.addEventListener('mouseout', function(e) {
+                var target = e.target.closest('a, button, input, select, .dropzone, .media-card, .filter-btn, [role="button"], .lightbox-nav, .lightbox-close');
+                if (target) {
+                    targetScale = 1;
+                    cursor.classList.remove('hovering');
+                    if (!isRunning) {
+                        isRunning = true;
+                        lastTime = performance.now();
+                        requestAnimationFrame(tick);
+                    }
+                }
+            });
+        });
+    </script>
+</body>
+</html>

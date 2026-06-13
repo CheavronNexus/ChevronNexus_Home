@@ -1,0 +1,1911 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Home Theater - ChevronNexus</title>
+    <link rel="stylesheet" href="/static/css/style.css">
+    <style>
+        /* Override specific classes for dedicated theater layout */
+        body {
+            background-color: #05060b !important;
+            overflow-x: hidden;
+        }
+
+        /* Ambient Background Glows */
+        .ambient-glow {
+            position: fixed;
+            width: 50vw;
+            height: 50vw;
+            border-radius: 50%;
+            background: radial-gradient(circle, rgba(236, 192, 101, 0.08) 0%, transparent 70%);
+            filter: blur(80px);
+            z-index: -1;
+            pointer-events: none;
+            animation: floatGlow 25s infinite alternate ease-in-out;
+        }
+
+        .ambient-glow-1 {
+            top: -10vw;
+            right: -10vw;
+            background: radial-gradient(circle, rgba(236, 192, 101, 0.06) 0%, transparent 70%);
+        }
+
+        .ambient-glow-2 {
+            bottom: -10vw;
+            left: -10vw;
+            background: radial-gradient(circle, rgba(147, 51, 234, 0.05) 0%, transparent 70%);
+            animation-delay: -10s;
+        }
+
+        @keyframes floatGlow {
+            0% { transform: translate(0, 0) scale(1); }
+            50% { transform: translate(8%, 8%) scale(1.15); }
+            100% { transform: translate(-5%, 5%) scale(0.95); }
+        }
+
+        .theater-header-logo {
+            display: flex;
+            align-items: center;
+            gap: 14px;
+        }
+
+        .theater-logo-icon {
+            width: 38px;
+            height: 38px;
+            color: #ecc065; /* Red */
+            background: rgba(236, 192, 101, 0.15);
+            padding: 6px;
+            border-radius: var(--radius-sm);
+            box-shadow: 0 0 10px rgba(236, 192, 101, 0.2);
+        }
+
+        .btn-files-hub {
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            background: rgba(255, 255, 255, 0.04);
+            transition: all var(--transition-fast);
+        }
+
+        .btn-files-hub:hover {
+            border-color: var(--primary-light);
+            background: rgba(var(--primary-rgb), 0.15);
+            color: var(--primary-light);
+            box-shadow: 0 0 12px rgba(var(--primary-rgb), 0.2);
+        }
+
+        /* Movie Library Page Section Adjustments */
+        .theater-layout-container {
+            max-width: 1280px;
+            margin: 0 auto;
+            padding: 24px 16px;
+            display: flex;
+            flex-direction: column;
+            gap: 28px;
+        }
+
+        /* Spotlight Hero Banner */
+        .spotlight-banner {
+            position: relative;
+            background: linear-gradient(135deg, rgba(18, 22, 38, 0.75) 0%, rgba(8, 10, 18, 0.9) 100%);
+            border: 1px solid rgba(236, 192, 101, 0.15);
+            border-radius: 20px;
+            padding: 40px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 40px;
+            min-height: 340px;
+            overflow: hidden;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.6);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            opacity: 0;
+            transform: translateY(20px);
+            animation: fadeInUp 0.8s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+        }
+
+        .spotlight-content {
+            flex-grow: 1;
+            max-width: 65%;
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+            text-align: left;
+            z-index: 5;
+        }
+
+        .spotlight-badge {
+            background: rgba(236, 192, 101, 0.15);
+            border: 1px solid rgba(236, 192, 101, 0.3);
+            color: #ecc065;
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 0.72rem;
+            font-weight: 800;
+            text-transform: uppercase;
+            letter-spacing: 1.5px;
+            width: fit-content;
+        }
+
+        .spotlight-title {
+            font-size: 3rem;
+            font-weight: 800;
+            line-height: 1.1;
+            margin: 0;
+            background: linear-gradient(to right, #ffffff 60%, #9ca3af 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            font-family: 'Outfit', sans-serif;
+            letter-spacing: -1px;
+            word-break: break-word;
+        }
+
+        .spotlight-meta {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            font-size: 0.85rem;
+            color: #9ca3af;
+            font-weight: 600;
+        }
+
+        .spotlight-desc {
+            font-size: 0.95rem;
+            line-height: 1.6;
+            color: #c5bdae;
+            margin: 0;
+        }
+
+        .spotlight-actions {
+            display: flex;
+            gap: 14px;
+            margin-top: 8px;
+        }
+
+        .btn-spotlight-play {
+            background: #ecc065;
+            color: white;
+            border: none;
+            padding: 12px 28px;
+            border-radius: 30px;
+            font-weight: 700;
+            font-size: 0.95rem;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            box-shadow: 0 4px 15px rgba(236, 192, 101, 0.4);
+            transition: all 0.25s ease;
+            text-decoration: none;
+        }
+
+        .btn-spotlight-play:hover {
+            background: #f4d185;
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(236, 192, 101, 0.5);
+        }
+
+        .btn-spotlight-download {
+            background: rgba(255, 255, 255, 0.08);
+            border: 1px solid rgba(255, 255, 255, 0.15);
+            color: white;
+            padding: 12px 24px;
+            border-radius: 30px;
+            font-weight: 600;
+            font-size: 0.95rem;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            transition: all 0.25s ease;
+            text-decoration: none;
+        }
+
+        .btn-spotlight-download:hover {
+            background: rgba(255, 255, 255, 0.15);
+            transform: translateY(-2px);
+        }
+
+        .spotlight-preview-wrapper {
+            position: relative;
+            width: 280px;
+            height: 175px;
+            border-radius: 14px;
+            overflow: hidden;
+            border: 1px solid rgba(255, 255, 255, 0.15);
+            box-shadow: 0 15px 30px rgba(0, 0, 0, 0.7);
+            flex-shrink: 0;
+            z-index: 5;
+            background: #000;
+        }
+
+        .spotlight-preview-fallback {
+            width: 100%;
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            background: linear-gradient(135deg, #220306 0%, #05060b 100%);
+            color: rgba(255, 255, 255, 0.8);
+            text-align: center;
+            padding: 20px;
+            box-sizing: border-box;
+        }
+
+        .spotlight-preview-fallback svg {
+            width: 44px;
+            height: 44px;
+            color: #ecc065;
+            filter: drop-shadow(0 0 8px rgba(236, 192, 101, 0.5));
+        }
+
+        /* Custom Movie Action Buttons (Preview, Download, Delete) */
+        .movie-action-btn {
+            position: absolute;
+            top: 8px;
+            z-index: 20;
+            background: rgba(0, 0, 0, 0.65);
+            border: 1px solid rgba(255, 255, 255, 0.25);
+            color: #ffffff;
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            transform: translateZ(10px);
+        }
+
+        .movie-action-btn:hover {
+            transform: scale(1.1) translateZ(15px);
+        }
+
+        .movie-preview-btn {
+            right: 88px;
+        }
+
+        .movie-preview-btn:hover {
+            background: #ecc065;
+            border-color: #ecc065;
+            box-shadow: 0 0 10px rgba(236, 192, 101, 0.6);
+        }
+
+        .movie-download-btn {
+            right: 48px;
+        }
+
+        .movie-download-btn:hover {
+            background: #ecc065;
+            border-color: #ecc065;
+            box-shadow: 0 0 10px rgba(236, 192, 101, 0.6);
+        }
+
+        .movie-delete-btn {
+            right: 8px;
+        }
+
+        .movie-delete-btn:hover {
+            background: #ff3344;
+            border-color: #ff3344;
+            box-shadow: 0 0 10px rgba(255, 51, 68, 0.6);
+        }
+
+        /* Film Upload Dropzone (Red Accent) */
+        .movie-upload-section {
+            background: rgba(18, 22, 38, 0.5);
+            border: 1px solid rgba(236, 192, 101, 0.15);
+            border-radius: 16px;
+            padding: 24px;
+            box-shadow: 0 15px 35px rgba(0,0,0,0.4);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            transition: all 0.3s ease;
+        }
+
+        .movie-dropzone {
+            border: 2px dashed rgba(236, 192, 101, 0.25);
+            background: rgba(0, 0, 0, 0.25);
+            border-radius: 12px;
+            padding: 32px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .movie-dropzone.dragover {
+            border-color: #ecc065;
+            background: rgba(236, 192, 101, 0.05);
+            box-shadow: inset 0 0 20px rgba(236, 192, 101, 0.15);
+        }
+
+        /* Custom Cursor follow element styles (Theater Theme matched - Red) */
+        .custom-cursor {
+            width: 20px;
+            height: 20px;
+            border: 2px solid #ecc065;
+            border-radius: 50%;
+            position: fixed;
+            pointer-events: none;
+            z-index: 10000;
+            margin-left: -10px;
+            margin-top: -10px;
+            box-shadow: 0 0 10px rgba(236, 192, 101, 0.4);
+            opacity: 0;
+            top: 0;
+            left: 0;
+            will-change: transform;
+            transform: translate3d(-100px, -100px, 0) scale(1);
+            transition: opacity 0.3s ease, border-color 0.25s ease, background-color 0.25s ease, box-shadow 0.25s ease;
+        }
+
+        /* Active hover sizing */
+        .custom-cursor.hovering {
+            border-color: #ffffff;
+            box-shadow: 0 0 15px rgba(255, 255, 255, 0.6);
+            background: rgba(236, 192, 101, 0.08);
+        }
+
+        /* Movie Poster Card 3D Tilt container */
+        .movie-poster-card {
+            position: relative;
+            transform-style: preserve-3d;
+            perspective: 1000px;
+            transition: border-color 0.25s, box-shadow 0.25s, transform 0.15s cubic-bezier(0.25, 0.8, 0.25, 1);
+            will-change: transform;
+            height: 310px;
+            cursor: pointer;
+            border-radius: 12px;
+        }
+
+        /* Premium Gradient/Typographic Fallback posters */
+        .movie-poster-fallback {
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(180deg, var(--card-bg-start, #1a160d) 0%, var(--card-bg-end, #05060b) 100%) !important;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            align-items: stretch;
+            padding: 24px;
+            box-sizing: border-box;
+            border-radius: inherit;
+            border: 1px solid rgba(255, 255, 255, 0.05);
+            text-align: center;
+            overflow: hidden;
+            position: relative;
+        }
+
+        .movie-poster-fallback::before {
+            content: "";
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 4px;
+            background: linear-gradient(90deg, transparent, rgba(236, 192, 101, 0.4), transparent);
+        }
+
+        .poster-glyph-wrapper {
+            margin-top: 10px;
+            display: flex;
+            justify-content: center;
+            opacity: 0.65;
+            transition: transform 0.35s ease, opacity 0.35s ease;
+        }
+
+        .movie-poster-card:hover .poster-glyph-wrapper {
+            transform: scale(1.15) translateZ(30px);
+            opacity: 0.95;
+        }
+
+        .poster-text-title {
+            font-family: 'Outfit', sans-serif;
+            font-weight: 800;
+            font-size: 1.25rem;
+            line-height: 1.3;
+            color: #ffffff;
+            letter-spacing: -0.3px;
+            margin-bottom: 20px;
+            text-shadow: 0 2px 10px rgba(0,0,0,0.8);
+            display: -webkit-box;
+            -webkit-line-clamp: 3;
+            -webkit-box-orient: vertical;
+            overflow: hidden;
+            transform: translateZ(15px);
+            transition: transform 0.35s ease;
+        }
+
+        .movie-poster-card:hover .poster-text-title {
+            transform: translateZ(25px);
+        }
+
+        /* 3D hover play overlay adjustments */
+        .movie-play-overlay {
+            transform: translateZ(35px) scale(0.9);
+            opacity: 0;
+            transition: transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275), opacity 0.3s;
+        }
+
+        .movie-poster-card:hover .movie-play-overlay {
+            opacity: 1;
+            transform: translateZ(35px) scale(1);
+        }
+
+        /* Focus state for projector navigation */
+        .movie-poster-card.selected-focus {
+            border-color: #ecc065 !important;
+            transform: scale(1.05) !important;
+            box-shadow: 0 0 25px rgba(236, 192, 101, 0.8) !important;
+            outline: none;
+            background: rgba(236, 192, 101, 0.12) !important;
+            z-index: 30;
+        }
+
+        /* Pulsing Skeleton Loader Styles */
+        .skeleton-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+            gap: 24px;
+            width: 100%;
+        }
+
+        .skeleton-card {
+            background: rgba(18, 22, 38, 0.5);
+            border: 1px solid rgba(255, 255, 255, 0.05);
+            border-radius: 12px;
+            height: 310px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .skeleton-card::after {
+            content: "";
+            position: absolute;
+            top: 0;
+            left: -150%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(236, 192, 101, 0.06), transparent);
+            animation: shimmer 1.6s infinite ease-in-out;
+        }
+
+        @keyframes shimmer {
+            0% { left: -150%; }
+            50% { left: 150%; }
+            100% { left: 150%; }
+        }
+
+        .skeleton-image {
+            height: 200px;
+            background: rgba(255, 255, 255, 0.02);
+            margin: 12px;
+            border-radius: 8px;
+        }
+
+        .skeleton-title {
+            height: 16px;
+            background: rgba(255, 255, 255, 0.03);
+            margin: 0 12px 10px 12px;
+            border-radius: 4px;
+            width: 70%;
+        }
+
+        .skeleton-meta {
+            height: 12px;
+            background: rgba(255, 255, 255, 0.02);
+            margin: 0 12px;
+            border-radius: 3px;
+            width: 40%;
+        }
+
+        /* Card fadeInUp Staggered Animations */
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(24px) scale(0.96);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0) scale(1);
+            }
+        }
+
+        /* Adjust loading state for grid layout scanning */
+        .loading-state {
+            display: flex;
+            flex-direction: column;
+            align-items: stretch;
+            gap: 20px;
+            width: 100%;
+        }
+
+        /* 3D glow overlay card style */
+        .card-glow-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            border-radius: inherit;
+            background: radial-gradient(circle at 50% 50%, rgba(236, 192, 101, 0.25) 0%, transparent 60%);
+            mix-blend-mode: screen;
+            opacity: 0;
+            transition: opacity 0.3s ease;
+            z-index: 10;
+        }
+
+        /* Custom Switch for Projector Mode */
+        .theater-switch {
+            position: relative;
+            display: inline-block;
+            width: 44px;
+            height: 24px;
+        }
+
+        .theater-switch input {
+            opacity: 0;
+            width: 0;
+            height: 0;
+        }
+
+        .theater-slider {
+            position: absolute;
+            cursor: pointer;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-color: rgba(255, 255, 255, 0.1);
+            transition: .3s;
+            border-radius: 24px;
+            border: 1px solid rgba(255, 255, 255, 0.15);
+        }
+
+        .theater-slider:before {
+            position: absolute;
+            content: "";
+            height: 16px;
+            width: 16px;
+            left: 3px;
+            bottom: 3px;
+            background-color: #ffffff;
+            transition: .3s;
+            border-radius: 50%;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.4);
+        }
+
+        .theater-switch input:checked + .theater-slider {
+            background-color: #ecc065;
+            border-color: #ecc065;
+        }
+
+        .theater-switch input:checked + .theater-slider:before {
+            transform: translateX(20px);
+        }
+
+        .hdr-toggle-container {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            background: rgba(255, 255, 255, 0.03);
+            border: 1px solid rgba(255, 255, 255, 0.06);
+            padding: 6px 14px;
+            border-radius: 30px;
+            transition: all var(--transition-fast);
+        }
+
+        .hdr-toggle-container:hover {
+            background: rgba(255, 255, 255, 0.06);
+            border-color: rgba(255, 255, 255, 0.12);
+        }
+
+        .hdr-toggle-label {
+            font-size: 0.85rem;
+            font-weight: 700;
+            color: #c5bdae;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .hdr-badge-sm {
+            font-size: 0.65rem;
+            font-weight: 900;
+            padding: 2px 6px;
+            border-radius: 4px;
+            letter-spacing: 0.5px;
+        }
+    </style>
+</head>
+<body>
+    <!-- Background Ambient Glow Decoration -->
+    <div class="ambient-glow ambient-glow-1"></div>
+    <div class="ambient-glow ambient-glow-2"></div>
+
+    <div class="theater-layout-container">
+        <!-- HEADER -->
+        <header class="app-header glass">
+            <div class="theater-header-logo">
+                <img src="/static/logo.jpg" alt="ChevronNexus Logo" style="width: 38px; height: 38px; object-fit: cover; border-radius: var(--radius-sm); border: 1px solid rgba(236, 192, 101, 0.4); box-shadow: 0 0 10px rgba(236, 192, 101, 0.3);">
+                <div class="logo-text">
+                    <h1>Home Theater</h1>
+                    <p class="subtitle" style="color: #ecc065; font-weight: 600;">Dedicated Movie Streaming</p>
+                </div>
+            </div>
+
+            <!-- Navigation back to general Files Sharing hub -->
+            <div class="connection-hub">
+                <a href="/" class="btn btn-secondary btn-files-hub" title="Go to Files Hub Sharing">
+                    <svg viewBox="0 0 24 24" class="icon" fill="none" stroke="currentColor" stroke-width="2">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M2.25 15.75l5.159-5.159a2.25 2.25 0 013.182 0l5.159 5.159m-1.5-1.5l1.409-1.409a2.25 2.25 0 013.182 0l2.909 2.909m-18 3.75h16.5a1.5 1.5 0 001.5-1.5V6a1.5 1.5 0 00-1.5-1.5H3.75A1.5 1.5 0 002.25 6v12a1.5 1.5 0 001.5 1.5zm10.5-11.25h.008v.008h-.008V8.25zm.375 0a.375.375 0 11-.75 0 .375.375 0 01.75 0z" />
+                    </svg>
+                    <span>Files Hub</span>
+                </a>
+            </div>
+        </header>
+
+        <!-- CINEMATIC HERO SPOTLIGHT BANNER -->
+        <section class="spotlight-banner" id="spotlight-banner" style="display: none;">
+            <div class="spotlight-content">
+                <div class="spotlight-badge">✨ Featured Spotlight</div>
+                <h2 class="spotlight-title" id="spotlight-title">Loading Featured Film...</h2>
+                <div class="spotlight-meta" id="spotlight-meta">
+                    <span>HDR10</span>
+                    <span>Dolby Audio</span>
+                </div>
+                <p class="spotlight-desc" id="spotlight-desc">Discover the ultimate offline screening experience. Select a movie to stream instantly at gigabit speed.</p>
+                <div class="spotlight-actions">
+                    <a href="#" class="btn-spotlight-play" id="spotlight-play-btn">
+                        <svg viewBox="0 0 24 24" fill="currentColor" style="width: 20px; height: 20px;">
+                            <path d="M8 5v14l11-7z"/>
+                        </svg>
+                        <span>Watch Now</span>
+                    </a>
+                    <a href="#" class="btn-spotlight-download" id="spotlight-download-btn">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" style="width: 18px; height: 18px;">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5M16.5 12L12 16.5m0 0L7.5 12m4.5 4.5V3" />
+                        </svg>
+                        <span>Download</span>
+                    </a>
+                </div>
+            </div>
+            <div class="spotlight-preview-wrapper">
+                <div class="spotlight-preview-fallback">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M6 20.25h12A2.25 2.25 0 0020.25 18V6A2.25 2.25 0 0018 3.75H6A2.25 2.25 0 003.75 6v12A2.25 2.25 0 006 20.25z" />
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M15.75 10.5l-4.5 3v-6l4.5 3z" />
+                    </svg>
+                    <span style="font-size: 0.85rem; font-weight: 700; margin-top: 8px;" id="spotlight-preview-name">Cinema Center</span>
+                </div>
+            </div>
+        </section>
+
+        <!-- MOVIE UPLOAD SECTION (Home Theater) -->
+        <section class="movie-upload-section">
+            <div class="movie-dropzone" id="movie-dropzone">
+                <input type="file" id="movie-file-input" multiple accept="video/*" class="file-input-hidden" style="display: none;">
+                <div class="dropzone-content">
+                    <svg viewBox="0 0 24 24" class="upload-icon" fill="none" stroke="#ecc065" stroke-width="1.5" style="width: 50px; height: 50px; margin-bottom: 12px; filter: drop-shadow(0 0 8px rgba(236, 192, 101, 0.3));">
+                        <circle cx="12" cy="12" r="10" stroke-width="1.2" />
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M12 8v8m-3-3h6" />
+                    </svg>
+                    <h3 style="font-family: 'Outfit', sans-serif; color: #ffffff; font-size: 1.3rem; margin-bottom: 6px;">Upload Film to Library</h3>
+                    <p style="color: #c5bdae; font-size: 0.9rem;">Drag & Drop Movies (All formats supported) or click to browse</p>
+                    <span class="badge" style="background: rgba(236, 192, 101, 0.08); border: 1px solid rgba(236, 192, 101, 0.2); color: #ecc065; font-size: 0.75rem; padding: 2px 8px; border-radius: 4px; display: inline-block; margin-top: 8px;">Supports large film files up to 100 GB</span>
+                </div>
+            </div>
+
+            <!-- Upload Queue list -->
+            <div class="upload-queue-container hidden" id="movie-upload-queue-container" style="margin-top: 16px;">
+                <div class="queue-header" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
+                    <h4 style="font-family: 'Outfit', sans-serif; color: #ecc065; margin: 0;">Active Film Uploads (<span id="movie-queue-count">0</span>)</h4>
+                    <div class="queue-actions" style="display: flex; gap: 8px;">
+                        <button class="btn btn-secondary btn-sm" id="movie-clear-queue-btn" style="padding: 4px 10px; font-size: 0.8rem; border-radius: 4px;">Cancel All</button>
+                        <button class="btn btn-danger btn-sm" id="movie-upload-all-btn" style="padding: 4px 10px; font-size: 0.8rem; border-radius: 4px; background: #ecc065; border: 1px solid #ecc065; color: #ffffff; cursor: pointer; transition: all 0.2s;">
+                            Upload
+                        </button>
+                    </div>
+                </div>
+                
+                <div class="upload-queue" id="movie-upload-queue" style="display: flex; flex-direction: column; gap: 8px; max-height: 200px; overflow-y: auto;">
+                    <!-- Queue items populated by JS -->
+                </div>
+                
+                <!-- Overall Progress -->
+                <div class="overall-progress-bar hidden" id="movie-overall-progress-container" style="margin-top: 16px;">
+                    <div class="progress-bar-track" style="background: rgba(255, 255, 255, 0.1); height: 6px; border-radius: 3px; overflow: hidden; position: relative;">
+                        <div class="progress-bar-fill" id="movie-overall-progress-fill" style="background: #ecc065; height: 100%; width: 0%; transition: width 0.2s ease;"></div>
+                    </div>
+                    <div class="progress-labels" style="display: flex; justify-content: space-between; font-size: 0.78rem; color: #c5bdae; margin-top: 6px; font-family: monospace;">
+                        <span id="movie-overall-progress-text">Uploading... 0%</span>
+                        <span id="movie-overall-progress-speed">0 KB/s</span>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- MOVIE TOOLBAR -->
+        <div class="gallery-toolbar glass">
+            <div class="filter-group">
+                <span class="status-badge" style="color: #ecc065; padding: 8px 12px; font-weight: 700; display: inline-flex; align-items: center; gap: 8px;">
+                    <span class="pulse-dot" style="background-color: #ecc065; box-shadow: 0 0 0 0 rgba(236, 192, 101, 0.7);"></span>
+                    Local Movies Library
+                </span>
+            </div>
+            <div class="control-group">
+                <div class="search-box">
+                    <svg viewBox="0 0 24 24" class="search-icon" fill="none" stroke="currentColor" stroke-width="2">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-5.197-5.197m0 0A7.5 7.5 0 105.196 5.196a7.5 7.5 0 0010.607 10.607z" />
+                    </svg>
+                    <input type="text" id="movie-search-input" placeholder="Search movies...">
+                </div>
+                <div class="select-wrapper">
+                    <select id="movie-sort-select">
+                        <option value="name_asc">Name (A-Z)</option>
+                        <option value="name_desc">Name (Z-A)</option>
+                        <option value="size_desc">Largest Size</option>
+                        <option value="size_asc">Smallest Size</option>
+                        <option value="newest">Recent Added</option>
+                    </select>
+                </div>
+            </div>
+        </div>
+
+        <!-- MOVIE GRID VIEWPORT -->
+        <div class="media-grid-wrapper">
+            <div class="movie-grid" id="movie-grid">
+                <!-- Movie poster cards populated by JS -->
+            </div>
+            
+            <!-- Movie Empty State -->
+            <div class="empty-state hidden" id="movie-empty-state">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M6 20.25h12A2.25 2.25 0 0020.25 18V6A2.25 2.25 0 0018 3.75H6A2.25 2.25 0 003.75 6v12A2.25 2.25 0 006 20.25z" />
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M15.75 10.5l-4.5 3v-6l4.5 3z" />
+                </svg>
+                <h3>No movies found</h3>
+                <p>Place movie files (MP4, MKV, WebM) in the server's <code>Movie</code> folder to stream them here.</p>
+            </div>
+
+            <!-- Movie Loading State -->
+            <div class="loading-state" id="movie-loading-state">
+                <div class="skeleton-grid">
+                    <div class="skeleton-card">
+                        <div class="skeleton-image"></div>
+                        <div class="skeleton-title"></div>
+                        <div class="skeleton-meta"></div>
+                    </div>
+                    <div class="skeleton-card">
+                        <div class="skeleton-image"></div>
+                        <div class="skeleton-title"></div>
+                        <div class="skeleton-meta"></div>
+                    </div>
+                    <div class="skeleton-card">
+                        <div class="skeleton-image"></div>
+                        <div class="skeleton-title"></div>
+                        <div class="skeleton-meta"></div>
+                    </div>
+                    <div class="skeleton-card">
+                        <div class="skeleton-image"></div>
+                        <div class="skeleton-title"></div>
+                        <div class="skeleton-meta"></div>
+                    </div>
+                    <div class="skeleton-card">
+                        <div class="skeleton-image"></div>
+                        <div class="skeleton-title"></div>
+                        <div class="skeleton-meta"></div>
+                    </div>
+                    <div class="skeleton-card">
+                        <div class="skeleton-image"></div>
+                        <div class="skeleton-title"></div>
+                        <div class="skeleton-meta"></div>
+                    </div>
+                </div>
+                <p style="text-align: center; color: #9ca3af; margin-top: 16px; font-weight: 600;">Scanning Movie directory...</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- TOAST CONTAINER -->
+    <div class="toast-container" id="toast-container"></div>
+
+    <script src="/static/js/qrcode.min.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            var movieFiles = [];
+            var displayedMovies = [];
+            var movieSearchQuery = '';
+            var movieSortBy = 'name_asc';
+            var currentLightboxIndex = -1;
+
+            // Server IPs & Room code persistence
+            var serverIps = [];
+            var serverPort = 5000;
+            var roomCode = localStorage.getItem('cn_room_code');
+            if (!roomCode) {
+                roomCode = String(Math.floor(1000 + Math.random() * 9000));
+                localStorage.setItem('cn_room_code', roomCode);
+            }
+
+            var el = {
+                movieSearchInput: document.getElementById('movie-search-input'),
+                movieSortSelect: document.getElementById('movie-sort-select'),
+                movieGrid: document.getElementById('movie-grid'),
+                movieEmptyState: document.getElementById('movie-empty-state'),
+                movieLoadingState: document.getElementById('movie-loading-state'),
+                toastContainer: document.getElementById('toast-container'),
+                lightbox: document.getElementById('lightbox'),
+                lightboxContent: document.getElementById('lightbox-content'),
+                lightboxFilename: document.getElementById('lightbox-filename'),
+                lightboxMeta: document.getElementById('lightbox-meta'),
+                lightboxCloseBtn: document.getElementById('lightbox-close-btn'),
+                lightboxDownloadBtn: document.getElementById('lightbox-download-btn'),
+                lightboxDeleteBtn: document.getElementById('lightbox-delete-btn'),
+                lightboxPrevBtn: document.getElementById('lightbox-prev-btn'),
+                lightboxNextBtn: document.getElementById('lightbox-next-btn'),
+                remoteModal: document.getElementById('remote-modal'),
+                closeRemoteModalBtn: document.getElementById('close-remote-modal-btn'),
+                remoteIpSelect: document.getElementById('remote-ip-select'),
+                remotePairingUrlText: document.getElementById('remote-pairing-url-text'),
+                btnCopyRemoteUrl: document.getElementById('btn-copy-remote-url'),
+                remoteQrcodeContainer: document.getElementById('remote-qrcode')
+            };
+
+            // Initialize API fetch
+            fetchMovies();
+            fetchIps();
+
+            // Setup listeners
+            if (el.movieSearchInput) {
+                el.movieSearchInput.addEventListener('input', function(e) {
+                    movieSearchQuery = e.target.value;
+                    processAndRenderMovies();
+                });
+            }
+
+            if (el.movieSortSelect) {
+                el.movieSortSelect.addEventListener('change', function(e) {
+                    movieSortBy = e.target.value;
+                    processAndRenderMovies();
+                });
+            }
+
+            if (el.lightboxCloseBtn) el.lightboxCloseBtn.addEventListener('click', closeLightbox);
+            if (el.lightboxPrevBtn) el.lightboxPrevBtn.addEventListener('click', function() { navigateLightbox(-1); });
+            if (el.lightboxNextBtn) el.lightboxNextBtn.addEventListener('click', function() { navigateLightbox(1); });
+            if (el.lightboxDeleteBtn) {
+                el.lightboxDeleteBtn.addEventListener('click', function() {
+                    if (currentLightboxIndex === -1) return;
+                    var movie = displayedMovies[currentLightboxIndex];
+                    if (!movie) return;
+                    
+                    var movieToDelete = movie.relative_path;
+                    closeLightbox();
+                    deleteMovie(movieToDelete);
+                });
+            }
+            if (el.lightbox) {
+                el.lightbox.addEventListener('click', function(e) {
+                    if (e.target === el.lightbox || e.target === el.lightboxContent) {
+                        closeLightbox();
+                    }
+                });
+            }
+
+            document.addEventListener('keydown', function(e) {
+                if (currentLightboxIndex > -1) {
+                    if (e.key === 'Escape') closeLightbox();
+                    if (e.key === 'ArrowLeft') navigateLightbox(-1);
+                    if (e.key === 'ArrowRight') navigateLightbox(1);
+                }
+                // Also close remote pairing modal on Escape
+                if (e.key === 'Escape' && el.remoteModal && el.remoteModal.classList.contains('active')) {
+                    el.remoteModal.classList.remove('active');
+                }
+            });
+
+            // Remote Pairing Modal Listeners
+            if (el.closeRemoteModalBtn) {
+                el.closeRemoteModalBtn.addEventListener('click', function() {
+                    if (el.remoteModal) {
+                        el.remoteModal.classList.remove('active');
+                    }
+                });
+            }
+
+            if (el.remoteModal) {
+                el.remoteModal.addEventListener('click', function(e) {
+                    if (e.target === el.remoteModal) {
+                        el.remoteModal.classList.remove('active');
+                    }
+                });
+            }
+
+            if (el.btnCopyRemoteUrl) {
+                el.btnCopyRemoteUrl.addEventListener('click', function() {
+                    if (el.remotePairingUrlText) {
+                        var url = el.remotePairingUrlText.textContent;
+                        copyToClipboard(url).then(function() {
+                            showToast('Remote URL Copied!', 'success');
+                        }).catch(function() {
+                            showToast('Copy failed. URL: ' + url, 'error');
+                        });
+                    }
+                });
+            }
+
+            if (el.remoteIpSelect) {
+                el.remoteIpSelect.addEventListener('change', function(e) {
+                    updateRemotePairingUrl(e.target.value);
+                });
+            }
+
+            function fetchMovies() {
+                el.movieLoadingState.classList.remove('hidden');
+                el.movieEmptyState.classList.add('hidden');
+                el.movieGrid.classList.add('hidden');
+
+                fetch('/api/movies')
+                    .then(function(res) {
+                        if (!res.ok) {
+                            throw new Error('Server returned status ' + res.status);
+                        }
+                        return res.json();
+                    })
+                    .then(function(data) {
+                        movieFiles = data.movies || [];
+                        el.movieLoadingState.classList.add('hidden');
+                        processAndRenderMovies();
+                    })
+                    .catch(function(err) {
+                        console.error("Failed to fetch movies", err);
+                        el.movieLoadingState.classList.add('hidden');
+                        showToast("Could not scan local Movie folder.", "error");
+                    });
+            }
+
+            function hashCode(str) {
+                var hash = 0;
+                for (var i = 0; i < str.length; i++) {
+                    hash = str.charCodeAt(i) + ((hash << 5) - hash);
+                }
+                return hash;
+            }
+
+            function generateGradientFromName(name) {
+                var hash = hashCode(name);
+                var hue1 = Math.abs(hash) % 360;
+                var hue2 = (hue1 + 60) % 360;
+                var startColor = 'hsl(' + hue1 + ', 75%, 12%)';
+                var endColor = 'hsl(' + hue2 + ', 60%, 4%)';
+                return 'linear-gradient(135deg, ' + startColor + ' 0%, ' + endColor + ' 100%)';
+            }
+
+            function setup3DTilt(card) {
+                card.addEventListener('mousemove', function(e) {
+                    var rect = card.getBoundingClientRect();
+                    var x = e.clientX - rect.left;
+                    var y = e.clientY - rect.top;
+                    
+                    var xNorm = (x / rect.width) - 0.5;
+                    var yNorm = (y / rect.height) - 0.5;
+                    
+                    var rotateX = -yNorm * 22;
+                    var rotateY = xNorm * 22;
+                    
+                    card.style.transition = 'border-color 0.25s, box-shadow 0.25s, transform 0s';
+                    card.style.transform = 'perspective(1000px) rotateX(' + rotateX + 'deg) rotateY(' + rotateY + 'deg) scale3d(1.04, 1.04, 1.04)';
+                    
+                    var glowOverlay = card.querySelector('.card-glow-overlay');
+                    if (!glowOverlay) {
+                        glowOverlay = document.createElement('div');
+                        glowOverlay.className = 'card-glow-overlay';
+                        card.appendChild(glowOverlay);
+                    }
+                    
+                    var glowX = (x / rect.width) * 100;
+                    var glowY = (y / rect.height) * 100;
+                    glowOverlay.style.background = 'radial-gradient(circle at ' + glowX + '% ' + glowY + '%, rgba(236, 192, 101, 0.25) 0%, transparent 60%)';
+                    glowOverlay.style.opacity = '1';
+                });
+                
+                card.addEventListener('mouseleave', function() {
+                    card.style.transition = 'border-color 0.25s, box-shadow 0.25s, transform 0.5s cubic-bezier(0.25, 0.8, 0.25, 1)';
+                    card.style.transform = 'perspective(1000px) rotateX(0deg) rotateY(0deg) scale3d(1, 1, 1)';
+                    var glowOverlay = card.querySelector('.card-glow-overlay');
+                    if (glowOverlay) {
+                        glowOverlay.style.opacity = '0';
+                    }
+                });
+            }
+
+            function processAndRenderMovies() {
+                var spotlightBanner = document.getElementById('spotlight-banner');
+                if (movieFiles && movieFiles.length > 0) {
+                    var featured = movieFiles[0];
+                    var featuredName = featured.name.replace(/\.[^/.]+$/, "");
+                    
+                    document.getElementById('spotlight-title').textContent = featuredName;
+                    
+                    var spotlightMeta = document.getElementById('spotlight-meta');
+                    if (spotlightMeta) {
+                        spotlightMeta.innerHTML = '\
+                            <span class="hdr-badge-sm" style="background: rgba(236, 192, 101, 0.15); border: 1px solid rgba(236, 192, 101, 0.3); color: #ecc065; padding: 2px 8px; border-radius: 4px;">HDR10</span>\
+                            <span style="background: rgba(255,255,255,0.05); padding: 2px 8px; border-radius: 4px; border: 1px solid rgba(255,255,255,0.1);">' + featured.format.toUpperCase() + '</span>\
+                            <span>Dolby Atmos</span>\
+                            <span>' + formatBytes(featured.size) + '</span>\
+                        ';
+                    }
+                    
+                    var spotlightDesc = document.getElementById('spotlight-desc');
+                    if (spotlightDesc) {
+                        spotlightDesc.textContent = 'Experience "' + featuredName + '" in cinematic high-fidelity. Stream instantly at gigabit speed from your local media storage server. Enjoy zero-buffering playback and premium audio output.';
+                    }
+                    
+                    var playBtn = document.getElementById('spotlight-play-btn');
+                    if (playBtn) {
+                        playBtn.href = '/player/' + encodeURIComponent(featured.relative_path);
+                    }
+                    var dlBtn = document.getElementById('spotlight-download-btn');
+                    if (dlBtn) {
+                        dlBtn.href = '/movies/' + encodeURIComponent(featured.relative_path) + '?download=1';
+                    }
+                    
+                    var previewName = document.getElementById('spotlight-preview-name');
+                    if (previewName) {
+                        previewName.textContent = featuredName;
+                    }
+                    var previewFallback = document.querySelector('.spotlight-preview-fallback');
+                    if (previewFallback) {
+                        previewFallback.style.background = generateGradientFromName(featured.name);
+                    }
+                    
+                    spotlightBanner.style.display = 'flex';
+                } else {
+                    spotlightBanner.style.display = 'none';
+                }
+
+                displayedMovies = movieFiles.filter(function(movie) {
+                    return movie.name.toLowerCase().indexOf(movieSearchQuery.toLowerCase()) > -1;
+                });
+
+                displayedMovies.sort(function(a, b) {
+                    if (movieSortBy === 'name_asc') return a.name.localeCompare(b.name);
+                    if (movieSortBy === 'name_desc') return b.name.localeCompare(a.name);
+                    if (movieSortBy === 'size_desc') return b.size - a.size;
+                    if (movieSortBy === 'size_asc') return a.size - b.size;
+                    if (movieSortBy === 'newest') return b.modified_at - a.modified_at;
+                    return 0;
+                });
+
+                el.movieGrid.innerHTML = '';
+                
+                if (displayedMovies.length === 0) {
+                    el.movieGrid.classList.add('hidden');
+                    el.movieEmptyState.classList.remove('hidden');
+                    return;
+                }
+
+                el.movieEmptyState.classList.add('hidden');
+                el.movieGrid.classList.remove('hidden');
+
+                displayedMovies.forEach(function(movie, index) {
+                    var card = document.createElement('div');
+                    card.className = 'movie-poster-card glass';
+                    
+                    card.style.animation = 'fadeInUp 0.6s cubic-bezier(0.16, 1, 0.3, 1) both';
+                    card.style.animationDelay = (index * 0.05) + 's';
+
+                    var displayName = movie.name.replace(/\.[^/.]+$/, "");
+
+                    card.innerHTML = '\
+                        <div class="movie-badge-container">\
+                            <span class="movie-badge">' + movie.format + '</span>\
+                            <span class="hdr-badge anim-glow">HDR10</span>\
+                        </div>\
+                        <button class="movie-action-btn movie-preview-btn" title="Preview Movie">\
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width: 16px; height: 16px;">\
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M2.036 12.322a1.012 1.012 0 010-.639C3.423 7.51 7.36 4.5 12 4.5c4.638 0 8.573 3.007 9.963 7.178.07.207.07.43 0 .639C20.577 16.49 16.64 19.5 12 19.5c-4.638 0-8.573-3.007-9.963-7.178z" />\
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />\
+                            </svg>\
+                        </button>\
+                        <button class="movie-action-btn movie-download-btn" title="Download Movie">\
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width: 16px; height: 16px;">\
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5M16.5 12L12 16.5m0 0L7.5 12m4.5 4.5V3" />\
+                            </svg>\
+                        </button>\
+                        <button class="movie-action-btn movie-delete-btn" title="Delete Movie">\
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width: 16px; height: 16px;">\
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M14.74 9l-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 01-2.244 2.077H8.084a2.25 2.25 0 01-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 00-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m0 0a48.11 48.11 0 013.478-.397m7.5 0v-.916c0-1.18-.91-2.164-2.09-2.201a51.964 51.964 0 00-3.32 0c-1.18.037-2.09 1.022-2.09 2.201v.916m7.5 0a48.667 48.667 0 00-7.5 0" />\
+                            </svg>\
+                        </button>\
+                        <div class="movie-poster-fallback" style="background: ' + generateGradientFromName(movie.name) + ' !important;">\
+                            <div class="poster-glyph-wrapper">\
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" style="width: 50px; height: 50px; color: rgba(255,255,255,0.3);">\
+                                    <path stroke-linecap="round" stroke-linejoin="round" d="M6 20.25h12A2.25 2.25 0 0020.25 18V6A2.25 2.25 0 0018 3.75H6A2.25 2.25 0 003.75 6v12A2.25 2.25 0 006 20.25z" />\
+                                    <path stroke-linecap="round" stroke-linejoin="round" d="M15.75 10.5l-4.5 3v-6l4.5 3z" />\
+                                </svg>\
+                            </div>\
+                            <span class="poster-text-title">' + displayName + '</span>\
+                        </div>\
+                        <div class="movie-play-overlay">\
+                            <div class="play-btn" style="background: rgba(236, 192, 101, 0.85);">\
+                                <svg viewBox="0 0 24 24" fill="currentColor">\
+                                    <path d="M8 5v14l11-7z"/>\
+                                </svg>\
+                            </div>\
+                        </div>\
+                        <div class="movie-card-overlay">\
+                            <div class="movie-card-title" title="' + displayName + '">' + displayName + '</div>\
+                            <div class="movie-card-meta">\
+                                <span>' + formatBytes(movie.size) + '</span>\
+                                <span>' + movie.format + '</span>\
+                            </div>\
+                        </div>\
+                    ';
+
+                    card.addEventListener('click', function() {
+                        window.location.href = '/player/' + encodeURIComponent(movie.relative_path);
+                    });
+
+                    var previewBtn = card.querySelector('.movie-preview-btn');
+                    previewBtn.addEventListener('click', function(e) {
+                        e.stopPropagation();
+                        openLightbox(index);
+                    });
+
+                    var dlBtn = card.querySelector('.movie-download-btn');
+                    dlBtn.addEventListener('click', function(e) {
+                        e.stopPropagation();
+                        window.location.href = '/movies/' + encodeURIComponent(movie.relative_path) + '?download=1';
+                    });
+
+                    var delBtn = card.querySelector('.movie-delete-btn');
+                    delBtn.addEventListener('click', function(e) {
+                        e.stopPropagation();
+                        deleteMovie(movie.relative_path);
+                    });
+
+                    setup3DTilt(card);
+
+                    el.movieGrid.appendChild(card);
+                });
+            }
+
+            function openLightbox(index) {
+                currentLightboxIndex = index;
+                var movie = displayedMovies[index];
+                if (!movie) return;
+
+                el.lightboxFilename.textContent = movie.name.replace(/\.[^/.]+$/, "");
+                el.lightboxMeta.textContent = 'Size: ' + formatBytes(movie.size) + ' | Format: ' + movie.format.toUpperCase();
+                el.lightboxDownloadBtn.href = '/movies/' + encodeURIComponent(movie.relative_path) + '?download=1';
+
+                el.lightboxContent.innerHTML = '';
+                var video = document.createElement('video');
+                video.src = '/movies/' + encodeURIComponent(movie.relative_path);
+                video.controls = true;
+                video.autoplay = true;
+                video.className = 'lightbox-media-video';
+                el.lightboxContent.appendChild(video);
+
+                el.lightbox.classList.add('active');
+            }
+
+            function closeLightbox() {
+                el.lightbox.classList.remove('active');
+                el.lightboxContent.innerHTML = '';
+                currentLightboxIndex = -1;
+            }
+
+            function navigateLightbox(direction) {
+                if (currentLightboxIndex === -1) return;
+                var newIndex = currentLightboxIndex + direction;
+                if (newIndex >= 0 && newIndex < displayedMovies.length) {
+                    openLightbox(newIndex);
+                }
+            }
+
+            function deleteMovie(filename) {
+                if (!confirm("Are you sure you want to delete this film permanently?")) {
+                    return;
+                }
+
+                fetch('/api/movies/' + encodeURIComponent(filename), {
+                    method: 'DELETE'
+                })
+                .then(function(res) {
+                    return res.json().catch(function() {
+                        return { error: 'Server returned error (' + res.status + ')' };
+                    }).then(function(data) {
+                        if (!res.ok) throw new Error(data.error || 'Server error');
+                        return data;
+                    });
+                })
+                .then(function(data) {
+                    showToast("Movie deleted successfully.", "success");
+                    fetchMovies();
+                })
+                .catch(function(err) {
+                    console.error("Delete failed", err);
+                    showToast(err.message, "error");
+                });
+            }
+
+            function copyToClipboard(text) {
+                if (navigator.clipboard && navigator.clipboard.writeText) {
+                    return navigator.clipboard.writeText(text);
+                } else {
+                    return new Promise(function(resolve, reject) {
+                        try {
+                            var textArea = document.createElement("textarea");
+                            textArea.value = text;
+                            textArea.style.top = "0";
+                            textArea.style.left = "0";
+                            textArea.style.position = "fixed";
+                            document.body.appendChild(textArea);
+                            textArea.focus();
+                            textArea.select();
+                            var successful = document.execCommand('copy');
+                            document.body.removeChild(textArea);
+                            if (successful) {
+                                resolve();
+                            } else {
+                                reject(new Error('Copy command failed'));
+                            }
+                        } catch (err) {
+                            reject(err);
+                        }
+                    });
+                }
+            }
+
+            function formatBytes(bytes, decimals) {
+                if (bytes === 0) return '0 Bytes';
+                var k = 1024;
+                var dm = (decimals === undefined || decimals < 0) ? 2 : decimals;
+                var sizes = ['Bytes', 'KB', 'MB', 'GB', 'TB'];
+                var i = Math.floor(Math.log(bytes) / Math.log(k));
+                return parseFloat((bytes / Math.pow(k, i)).toFixed(dm)) + ' ' + sizes[i];
+            }
+
+            function showToast(message, type) {
+                var toast = document.createElement('div');
+                toast.className = 'toast ' + (type || 'info');
+                
+                var iconHTML = '';
+                if (type === 'success') {
+                    iconHTML = '<svg viewBox="0 0 24 24" class="toast-icon" fill="none" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>';
+                } else if (type === 'error') {
+                    iconHTML = '<svg viewBox="0 0 24 24" class="toast-icon" fill="none" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M12 9v3.75m9-.75a9 9 0 11-18 0 9 9 0 0118 0zm-9 3.75h.008v.008H12v-.008z" /></svg>';
+                }
+
+                toast.innerHTML = iconHTML + '<span>' + message + '</span>';
+                el.toastContainer.appendChild(toast);
+                setTimeout(function() {
+                    toast.style.transition = 'opacity 0.5s ease';
+                    toast.style.opacity = '0';
+                    setTimeout(function() { toast.remove(); }, 500);
+                }, 4000);
+            }
+
+            // Film Uploader Logic
+            var movieDropzone = document.getElementById('movie-dropzone');
+            var movieFileInput = document.getElementById('movie-file-input');
+            var movieQueueContainer = document.getElementById('movie-upload-queue-container');
+            var movieQueueList = document.getElementById('movie-upload-queue');
+            var movieQueueCount = document.getElementById('movie-queue-count');
+            var movieClearQueueBtn = document.getElementById('movie-clear-queue-btn');
+            var movieUploadAllBtn = document.getElementById('movie-upload-all-btn');
+            var movieProgressContainer = document.getElementById('movie-overall-progress-container');
+            var movieProgressFill = document.getElementById('movie-overall-progress-fill');
+            var movieProgressText = document.getElementById('movie-overall-progress-text');
+            var movieProgressSpeed = document.getElementById('movie-overall-progress-speed');
+
+            var movieUploadQueue = [];
+            var isMovieUploading = false;
+
+            movieDropzone.addEventListener('click', function() {
+                if (!isMovieUploading) movieFileInput.click();
+            });
+
+            movieFileInput.addEventListener('change', function(e) {
+                addMoviesToQueue(e.target.files);
+                movieFileInput.value = '';
+            });
+
+            movieDropzone.addEventListener('dragover', function(e) {
+                e.preventDefault();
+                if (!isMovieUploading) movieDropzone.classList.add('dragover');
+            });
+
+            movieDropzone.addEventListener('dragleave', function() {
+                movieDropzone.classList.remove('dragover');
+            });
+
+            movieDropzone.addEventListener('drop', function(e) {
+                e.preventDefault();
+                movieDropzone.classList.remove('dragover');
+                if (!isMovieUploading && e.dataTransfer.files.length > 0) {
+                    addMoviesToQueue(e.dataTransfer.files);
+                }
+            });
+
+            function addMoviesToQueue(files) {
+                for (var i = 0; i < files.length; i++) {
+                    var file = files[i];
+                    var isDuplicate = false;
+                    for (var j = 0; j < movieUploadQueue.length; j++) {
+                        if (movieUploadQueue[j].file.name === file.name && movieUploadQueue[j].file.size === file.size) {
+                            isDuplicate = true;
+                            break;
+                        }
+                    }
+                    if (isDuplicate) continue;
+                    movieUploadQueue.push({ file: file, id: 'm_' + Math.random().toString(36).substr(2, 9) });
+                }
+                renderMovieQueue();
+            }
+
+            function renderMovieQueue() {
+                movieQueueList.innerHTML = '';
+                if (movieUploadQueue.length === 0) {
+                    movieQueueContainer.classList.add('hidden');
+                    return;
+                }
+                movieQueueContainer.classList.remove('hidden');
+                movieQueueCount.textContent = movieUploadQueue.length;
+
+                movieUploadQueue.forEach(function(item) {
+                    var div = document.createElement('div');
+                    div.style.display = 'flex';
+                    div.style.justifyContent = 'space-between';
+                    div.style.alignItems = 'center';
+                    div.style.background = 'rgba(0,0,0,0.3)';
+                    div.style.padding = '8px 12px';
+                    div.style.borderRadius = '4px';
+                    div.style.border = '1px solid rgba(236, 192, 101, 0.1)';
+
+                    div.innerHTML = '\
+                        <div style="font-size: 0.82rem; color: #ffffff; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 70%;">\
+                            ' + item.file.name + ' <span style="color: #c5bdae; font-size: 0.75rem;">(' + formatBytes(item.file.size) + ')</span>\
+                        </div>\
+                        <button class="remove-queue-item" data-id="' + item.id + '" style="background: none; border: none; color: #ecc065; font-size: 1.1rem; cursor: pointer;">&times;</button>\
+                    ';
+
+                    div.querySelector('.remove-queue-item').addEventListener('click', function(e) {
+                        e.stopPropagation();
+                        movieUploadQueue = movieUploadQueue.filter(function(q) { return q.id !== item.id; });
+                        renderMovieQueue();
+                    });
+
+                    movieQueueList.appendChild(div);
+                });
+            }
+
+            movieClearQueueBtn.addEventListener('click', function(e) {
+                e.stopPropagation();
+                if (isMovieUploading) return;
+                movieUploadQueue = [];
+                renderMovieQueue();
+            });
+
+            movieUploadAllBtn.addEventListener('click', function(e) {
+                e.stopPropagation();
+                if (isMovieUploading || movieUploadQueue.length === 0) return;
+                performMovieUploads();
+            });
+
+            function performMovieUploads() {
+                isMovieUploading = true;
+                movieUploadAllBtn.disabled = true;
+                movieClearQueueBtn.disabled = true;
+                movieProgressContainer.classList.remove('hidden');
+                
+                var totalBytes = 0;
+                movieUploadQueue.forEach(function(item) { totalBytes += item.file.size; });
+                
+                var formData = new FormData();
+                movieUploadQueue.forEach(function(item) {
+                    formData.append('files', item.file);
+                });
+
+                var xhr = new XMLHttpRequest();
+                var startTime = Date.now();
+
+                xhr.upload.addEventListener('progress', function(e) {
+                    if (e.lengthComputable) {
+                        var percent = Math.round((e.loaded / e.total) * 100);
+                        movieProgressFill.style.width = percent + '%';
+                        
+                        var timeElapsed = (Date.now() - startTime) / 1000;
+                        var speed = timeElapsed > 0 ? (e.loaded / timeElapsed) : 0;
+                        movieProgressText.textContent = 'Uploading Film... ' + percent + '%';
+                        movieProgressSpeed.textContent = formatBytes(speed) + '/s';
+                    }
+                });
+
+                xhr.addEventListener('load', function() {
+                    isMovieUploading = false;
+                    movieUploadAllBtn.disabled = false;
+                    movieClearQueueBtn.disabled = false;
+                    movieProgressContainer.classList.add('hidden');
+                    
+                    if (xhr.status >= 200 && xhr.status < 300) {
+                        showToast("Cinematic film uploaded successfully!", "success");
+                        movieUploadQueue = [];
+                        renderMovieQueue();
+                        fetchMovies();
+                    } else {
+                        try {
+                            var res = JSON.parse(xhr.responseText);
+                            showToast(res.error || "Upload failed.", "error");
+                        } catch(err) {
+                            showToast("Server upload failed.", "error");
+                        }
+                    }
+                });
+
+                xhr.addEventListener('error', function() {
+                    isMovieUploading = false;
+                    movieUploadAllBtn.disabled = false;
+                    movieClearQueueBtn.disabled = false;
+                    movieProgressContainer.classList.add('hidden');
+                    showToast("Network connection error during film upload.", "error");
+                });
+
+                xhr.open('POST', '/api/movies/upload');
+                xhr.send(formData);
+            }
+
+            // Custom cursor script
+            var cursor = document.getElementById('custom-cursor');
+            var mouseX = -100;
+            var mouseY = -100;
+            var cursorX = -100;
+            var cursorY = -100;
+            var currentScale = 1;
+            var targetScale = 1;
+            var isCursorRunning = false;
+            var cursorInitialized = false;
+
+            document.addEventListener('mousemove', function(e) {
+                mouseX = e.clientX;
+                mouseY = e.clientY;
+                cursor.style.opacity = '1';
+                
+                if (!cursorInitialized) {
+                    cursorX = mouseX;
+                    cursorY = mouseY;
+                    cursor.style.transform = 'translate3d(' + cursorX + 'px, ' + cursorY + 'px, 0) scale(' + currentScale + ')';
+                    cursorInitialized = true;
+                }
+
+                if (!isCursorRunning) {
+                    isCursorRunning = true;
+                    lastTime = performance.now();
+                    requestAnimationFrame(tick);
+                }
+            });
+
+            document.addEventListener('mouseleave', function() {
+                cursor.style.opacity = '0';
+                cursorInitialized = false;
+            });
+
+            var lastTime = performance.now();
+            function tick(now) {
+                if (!cursorInitialized) {
+                    isCursorRunning = false;
+                    return;
+                }
+
+                var dt = Math.min(3, (now - lastTime) / 8.333);
+                lastTime = now;
+                
+                var dx = mouseX - cursorX;
+                var dy = mouseY - cursorY;
+                var ds = targetScale - currentScale;
+                
+                if (Math.abs(dx) < 0.1 && Math.abs(dy) < 0.1 && Math.abs(ds) < 0.01) {
+                    cursorX = mouseX;
+                    cursorY = mouseY;
+                    currentScale = targetScale;
+                    cursor.style.transform = 'translate3d(' + cursorX + 'px, ' + cursorY + 'px, 0) scale(' + currentScale + ')';
+                    isCursorRunning = false;
+                    return;
+                }
+                
+                var speed = 0.15;
+                var factor = 1 - Math.pow(1 - speed, dt);
+                
+                cursorX += dx * factor;
+                cursorY += dy * factor;
+                currentScale += ds * factor;
+                
+                cursor.style.transform = 'translate3d(' + cursorX + 'px, ' + cursorY + 'px, 0) scale(' + currentScale + ')';
+                
+                requestAnimationFrame(tick);
+            }
+
+            document.addEventListener('mouseover', function(e) {
+                var target = e.target.closest('a, button, input, select, .movie-poster-card, [role="button"]');
+                if (target) {
+                    targetScale = 1.6;
+                    cursor.classList.add('hovering');
+                    if (!isCursorRunning) {
+                        isCursorRunning = true;
+                        lastTime = performance.now();
+                        requestAnimationFrame(tick);
+                    }
+                }
+            });
+
+            document.addEventListener('mouseout', function(e) {
+                var target = e.target.closest('a, button, input, select, .movie-poster-card, [role="button"]');
+                if (target) {
+                    targetScale = 1;
+                    cursor.classList.remove('hovering');
+                    if (!isCursorRunning) {
+                        isCursorRunning = true;
+                        lastTime = performance.now();
+                        requestAnimationFrame(tick);
+                    }
+                }
+            });
+
+            // D-PAD & PROJECTOR/REMOTE NAVIGATION
+            var projectorMode = false;
+            var selectedIndex = 0;
+            
+            var toolbar = document.querySelector('.gallery-toolbar .control-group');
+            if (toolbar) {
+                var projWrapper = document.createElement('div');
+                projWrapper.className = 'hdr-toggle-container';
+                projWrapper.style.cursor = 'pointer';
+                projWrapper.style.display = 'flex';
+                projWrapper.style.alignItems = 'center';
+                projWrapper.style.gap = '10px';
+                projWrapper.innerHTML = '\
+                    <span class="hdr-toggle-label">                        <span class="hdr-badge-sm" style="background: linear-gradient(135deg, #ecc065 0%, #d4af37 100%); color: #0b0d19; font-weight:800;">TV</span>                        Remote Mode                    </span>                    <label class="theater-switch">                        <input type="checkbox" id="projector-mode-toggle">                        <span class="theater-slider"></span>                    </label>                ';
+                toolbar.insertBefore(projWrapper, toolbar.firstChild);
+                
+                var toggleInput = document.getElementById('projector-mode-toggle');
+                toggleInput.addEventListener('change', function(e) {
+                    projectorMode = e.target.checked;
+                    if (projectorMode) {
+                        selectedIndex = 0;
+                        updateProjectorFocus();
+                        showToast("TV Remote Mode Active. Use D-pad / Arrow Keys & OK.", "info");
+                    } else {
+                        clearProjectorFocus();
+                    }
+                });
+            }
+
+            function updateProjectorFocus() {
+                var cards = el.movieGrid.querySelectorAll('.movie-poster-card');
+                [].forEach.call(cards, function(c, idx) {
+                    if (idx === selectedIndex) {
+                        c.classList.add('selected-focus');
+                        c.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
+                    } else {
+                        c.classList.remove('selected-focus');
+                    }
+                });
+            }
+
+            function clearProjectorFocus() {
+                var cards = el.movieGrid.querySelectorAll('.movie-poster-card');
+                [].forEach.call(cards, function(c) { c.classList.remove('selected-focus'); });
+            }
+
+            document.addEventListener('keydown', function(e) {
+                if (document.activeElement === el.movieSearchInput) return;
+                if (!projectorMode) return;
+                
+                var cards = el.movieGrid.querySelectorAll('.movie-poster-card');
+                if (cards.length === 0) return;
+
+                var gridWidth = el.movieGrid.offsetWidth;
+                var cardWidth = cards[0].offsetWidth || 200;
+                var cols = Math.max(1, Math.floor(gridWidth / (cardWidth + 24))); 
+
+                if (e.key === 'ArrowRight') {
+                    e.preventDefault();
+                    selectedIndex = Math.min(cards.length - 1, selectedIndex + 1);
+                    updateProjectorFocus();
+                }
+                if (e.key === 'ArrowLeft') {
+                    e.preventDefault();
+                    selectedIndex = Math.max(0, selectedIndex - 1);
+                    updateProjectorFocus();
+                }
+                if (e.key === 'ArrowDown') {
+                    e.preventDefault();
+                    selectedIndex = Math.min(cards.length - 1, selectedIndex + cols);
+                    updateProjectorFocus();
+                }
+                if (e.key === 'ArrowUp') {
+                    e.preventDefault();
+                    selectedIndex = Math.max(0, selectedIndex - cols);
+                    updateProjectorFocus();
+                }
+                if (e.key === 'Enter') {
+                    e.preventDefault();
+                    if (selectedIndex >= 0 && selectedIndex < cards.length) {
+                        cards[selectedIndex].click();
+                    }
+                }
+            });
+
+            document.addEventListener('keydown', function(e) {
+                if (document.activeElement === el.movieSearchInput) return;
+                if (e.key.toLowerCase() === 'p') {
+                    e.preventDefault();
+                    var toggleInput = document.getElementById('projector-mode-toggle');
+                    if (toggleInput) {
+                        toggleInput.checked = !toggleInput.checked;
+                        toggleInput.dispatchEvent(new Event('change'));
+                    }
+                }
+            });
+
+            // Display remote badge in header
+            var connHub = document.querySelector('.connection-hub');
+            if (connHub) {
+                var badge = document.createElement('div');
+                badge.className = 'cn-remote-badge';
+                badge.style.display = 'inline-flex';
+                badge.style.alignItems = 'center';
+                badge.style.gap = '8px';
+                badge.style.padding = '6px 12px';
+                badge.style.borderRadius = '20px';
+                badge.style.background = 'rgba(236, 192, 101, 0.08)';
+                badge.style.border = '1px solid rgba(236, 192, 101, 0.15)';
+                badge.style.marginRight = '12px';
+                badge.style.cursor = 'pointer';
+                badge.style.transition = 'all 0.2s';
+                badge.title = 'Pairing Code. Click to pair remote controller.';
+                badge.innerHTML = '<span class="hdr-badge-sm" style="background:linear-gradient(135deg,#ecc065,#d4af37);color:#0b0d19;font-weight:800;padding:2px 6px;border-radius:4px;font-size:0.65rem;">REMOTE</span>' +
+                    '<span style="font-size:0.8rem;font-weight:700;color:#ecc065;margin-left:4px;">Code: ' + roomCode + '</span>';
+                badge.addEventListener('click', function() {
+                    if (el.remoteModal) {
+                        el.remoteModal.classList.add('active');
+                        if (el.remoteIpSelect) {
+                            updateRemotePairingUrl(el.remoteIpSelect.value);
+                        }
+                    }
+                });
+                // Add hover effects manually for CSS compatibility
+                badge.addEventListener('mouseover', function() {
+                    badge.style.borderColor = 'rgba(236, 192, 101, 0.5)';
+                    badge.style.background = 'rgba(236, 192, 101, 0.15)';
+                });
+                badge.addEventListener('mouseout', function() {
+                    badge.style.borderColor = 'rgba(236, 192, 101, 0.15)';
+                    badge.style.background = 'rgba(236, 192, 101, 0.08)';
+                });
+                connHub.insertBefore(badge, connHub.firstChild);
+            }
+
+            // Connect to SSE for Remote D-Pad Grid Control
+            var sse = new EventSource('/api/player/stream/' + roomCode);
+            sse.onmessage = function(event) {
+                var data = event.data;
+                if (data === 'ping') return;
+
+                var command = data;
+                var value = null;
+                var colonIdx = data.indexOf(':');
+                if (colonIdx !== -1) {
+                    command = data.substring(0, colonIdx);
+                    value = data.substring(colonIdx + 1);
+                }
+
+                // Auto-enable remote mode on key navigation if not active
+                if (command === 'key_up' || command === 'key_down' || command === 'skip_back' || command === 'skip_forward' || command === 'toggle_play') {
+                    if (!projectorMode) {
+                        projectorMode = true;
+                        var toggleInput = document.getElementById('projector-mode-toggle');
+                        if (toggleInput) toggleInput.checked = true;
+                        selectedIndex = 0;
+                        updateProjectorFocus();
+                        showToast("TV Remote Mode Enabled", "info");
+                    }
+                }
+
+                if (projectorMode) {
+                    var cards = el.movieGrid.querySelectorAll('.movie-poster-card');
+                    if (cards.length > 0) {
+                        var gridWidth = el.movieGrid.offsetWidth;
+                        var cardWidth = cards[0].offsetWidth || 200;
+                        var cols = Math.max(1, Math.floor(gridWidth / (cardWidth + 24)));
+
+                        if (command === 'key_up') {
+                            selectedIndex = Math.max(0, selectedIndex - cols);
+                            updateProjectorFocus();
+                        } else if (command === 'key_down') {
+                            selectedIndex = Math.min(cards.length - 1, selectedIndex + cols);
+                            updateProjectorFocus();
+                        } else if (command === 'skip_back') {
+                            selectedIndex = Math.max(0, selectedIndex - 1);
+                            updateProjectorFocus();
+                        } else if (command === 'skip_forward') {
+                            selectedIndex = Math.min(cards.length - 1, selectedIndex + 1);
+                            updateProjectorFocus();
+                        } else if (command === 'toggle_play') {
+                            if (selectedIndex >= 0 && selectedIndex < cards.length) {
+                                cards[selectedIndex].click();
+                            }
+                        }
+                    }
+                }
+
+                if (command === 'play_movie' && value) {
+                    window.location.href = '/player/' + encodeURIComponent(value);
+                }
+            };
+
+            function fetchIps() {
+                fetch('/api/ips')
+                    .then(function(res) { return res.json(); })
+                    .then(function(data) {
+                        serverIps = data.ips;
+                        serverPort = data.port;
+                        renderRemotePairingInfo();
+                    })
+                    .catch(function(err) {
+                        console.error("Failed to load server IP addresses", err);
+                        var fallbackIp = window.location.hostname;
+                        serverIps = [fallbackIp];
+                        renderRemotePairingInfo();
+                    });
+            }
+
+            function renderRemotePairingInfo() {
+                if (el.remoteIpSelect) {
+                    el.remoteIpSelect.innerHTML = '';
+                    serverIps.forEach(function(ip) {
+                        if (ip !== '127.0.0.1') {
+                            var option = document.createElement('option');
+                            option.value = ip;
+                            option.textContent = ip + ' (LAN / Wi-Fi)';
+                            el.remoteIpSelect.appendChild(option);
+                        }
+                    });
+                    
+                    if (el.remoteIpSelect.options.length === 0) {
+                        var option = document.createElement('option');
+                        option.value = '127.0.0.1';
+                        option.textContent = '127.0.0.1 (Localhost)';
+                        el.remoteIpSelect.appendChild(option);
+                    }
+
+                    var primaryIp = serverIps.filter(function(ip) { return ip !== '127.0.0.1'; })[0] || '127.0.0.1';
+                    el.remoteIpSelect.value = primaryIp;
+                    updateRemotePairingUrl(primaryIp);
+                }
+            }
+
+            function updateRemotePairingUrl(ip) {
+                var baseUrl = serverPort === 80 ? 'http://' + ip : 'http://' + ip + ':' + serverPort;
+                var remoteUrl = baseUrl + '/remote?code=' + roomCode;
+                
+                if (el.remotePairingUrlText) {
+                    el.remotePairingUrlText.textContent = remoteUrl;
+                }
+
+                try {
+                    if (el.remoteQrcodeContainer) {
+                        el.remoteQrcodeContainer.innerHTML = '';
+                        new QRCode(el.remoteQrcodeContainer, {
+                            text: remoteUrl,
+                            width: 180,
+                            height: 180,
+                            colorDark: '#08090e',
+                            colorLight: '#ffffff',
+                            correctLevel: QRCode.CorrectLevel.M
+                        });
+                    }
+                } catch (e) {
+                    console.error("QR Code library error", e);
+                }
+            }
+        });
+    </script>
+    <!-- MODAL: LIGHTBOX -->
+    <div class="lightbox" id="lightbox">
+        <button class="lightbox-close" id="lightbox-close-btn" aria-label="Close lightbox">&times;</button>
+        <button class="lightbox-nav lightbox-prev" id="lightbox-prev-btn" aria-label="Previous file">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M15.75 19.5L8.25 12l7.5-7.5" />
+            </svg>
+        </button>
+        <button class="lightbox-nav lightbox-next" id="lightbox-next-btn" aria-label="Next file">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M8.25 4.5l7.5 7.5-7.5 7.5" />
+            </svg>
+        </button>
+
+        <div class="lightbox-content" id="lightbox-content">
+            <!-- Rendered Image or Video by JS -->
+        </div>
+
+        <div class="lightbox-footer">
+            <div class="lightbox-info">
+                <h4 id="lightbox-filename">file.jpg</h4>
+                <p id="lightbox-meta">Size: 0 MB • Uploaded: Just now</p>
+            </div>
+            <div class="lightbox-actions">
+                <a href="#" download id="lightbox-download-btn" class="btn btn-secondary btn-sm" title="Download">
+                    <svg viewBox="0 0 24 24" class="icon" fill="none" stroke="currentColor" stroke-width="2">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5M16.5 12L12 16.5m0 0L7.5 12m4.5 4.5V3" />
+                    </svg>
+                    <span>Download</span>
+                </a>
+                <button id="lightbox-delete-btn" class="btn btn-danger btn-sm" title="Delete">
+                    <svg viewBox="0 0 24 24" class="icon" fill="none" stroke="currentColor" stroke-width="2">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M14.74 9l-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 01-2.244 2.077H8.084a2.25 2.25 0 01-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 00-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m0 0a48.11 48.11 0 013.478-.397m7.5 0v-.916c0-1.18-.91-2.164-2.09-2.201a51.964 51.964 0 00-3.32 0c-1.18.037-2.09 1.022-2.09 2.201v.916m7.5 0a48.667 48.667 0 00-7.5 0" />
+                    </svg>
+                    <span>Delete</span>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL: REMOTE PAIRING QR CODE -->
+    <div class="modal-backdrop" id="remote-modal" style="z-index: 3000;">
+        <div class="modal glass animate-scale" style="background: rgba(11, 13, 25, 0.9); border: 1px solid rgba(236, 192, 101, 0.25); box-shadow: 0 20px 40px rgba(0,0,0,0.8);">
+            <div class="modal-header" style="border-bottom: 1px solid rgba(236, 192, 101, 0.15); padding-bottom: 12px; margin-bottom: 16px;">
+                <h3 style="color: #ecc065; font-weight: 700; margin: 0; font-family: 'Outfit', sans-serif; display: flex; align-items: center; gap: 8px;">
+                    <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" style="color: #ecc065;">
+                        <rect x="5" y="2" width="14" height="20" rx="2" ry="2" />
+                        <line x1="12" y1="18" x2="12" y2="18.01" />
+                    </svg>
+                    TV Remote Pairing
+                </h3>
+                <button class="modal-close" id="close-remote-modal-btn" aria-label="Close modal" style="color: #c5bdae; font-size: 1.8rem; background: none; border: none; cursor: pointer;">&times;</button>
+            </div>
+            <div class="modal-body qr-modal-body" style="display: flex; flex-direction: column; align-items: center; text-align: center; gap: 16px;">
+                <p style="color: #c5bdae; font-size: 0.88rem; margin: 0; line-height: 1.4;">Scan this QR code with your phone/tablet to instantly pair as a remote controller:</p>
+                
+                <div class="qr-wrapper" style="background: white; padding: 12px; border-radius: 8px; box-shadow: 0 4px 12px rgba(0,0,0,0.5); display: flex; align-items: center; justify-content: center;">
+                    <div id="remote-qrcode"></div>
+                </div>
+
+                <div class="qr-instructions" style="background: rgba(0, 0, 0, 0.25); border: 1px solid rgba(236, 192, 101, 0.15); padding: 12px; border-radius: 8px; font-size: 0.82rem; width: 100%; display: flex; flex-direction: column; gap: 10px; text-align: left;">
+                    
+                    <div class="ip-selector-wrapper" style="display: flex; flex-direction: column; gap: 6px;">
+                        <label for="remote-ip-select" style="font-size: 0.78rem; color: #c5bdae; font-weight: 600;">Server IP / Interface (LAN):</label>
+                        <select id="remote-ip-select" style="background: rgba(0, 0, 0, 0.4); border: 1px solid rgba(236, 192, 101, 0.2); color: #ffffff; padding: 8px 10px; border-radius: 4px; outline: none; width: 100%; font-family: monospace; font-size: 0.82rem; cursor: pointer;">
+                            <!-- Dynamically populated -->
+                        </select>
+                    </div>
+
+                    <div style="display: flex; flex-direction: column; gap: 4px; margin-top: 4px;">
+                        <span style="font-size: 0.78rem; color: #c5bdae; font-weight: 600;">Pairing URL:</span>
+                        <div style="display: flex; align-items: center; gap: 8px; background: rgba(0,0,0,0.3); border: 1px solid rgba(255,255,255,0.05); padding: 6px 10px; border-radius: 4px;">
+                            <span id="remote-pairing-url-text" style="font-family: monospace; color: #ecc065; font-size: 0.78rem; word-break: break-all; flex-grow: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">Loading url...</span>
+                            <button class="btn btn-secondary btn-sm" id="btn-copy-remote-url" style="padding: 2px 8px; font-size: 0.72rem; height: auto; border-radius: 3px; background: rgba(236, 192, 101, 0.15); border: 1px solid rgba(236, 192, 101, 0.3); color: #ecc065; transition: all 0.2s; cursor: pointer;">Copy</button>
+                        </div>
+                    </div>
+
+                    <div style="font-size: 0.75rem; color: #9ca3af; text-align: center; margin-top: 4px; line-height: 1.4;">
+                        Ensure your remote device is connected to the same Wi-Fi/LAN network.
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="custom-cursor" id="custom-cursor"></div>
+</body>
+</html>

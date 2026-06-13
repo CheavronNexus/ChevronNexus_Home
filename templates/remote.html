@@ -1,0 +1,1461 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>ChevronNexus TV Remote</title>
+    <link rel="stylesheet" href="/static/css/style.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Outfit:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+        :root {
+            --bg-base: #060813;
+            --accent-gold: #ecc065;
+            --accent-gold-rgb: 236, 192, 101;
+            --accent-blue: #3b82f6;
+            --accent-indigo: #6366f1;
+            --accent-indigo-rgb: 99, 102, 241;
+            --accent-emerald: #10b981;
+            --bg-card: rgba(13, 17, 34, 0.7);
+            --border-light: rgba(255, 255, 255, 0.08);
+            --text-main: #f3f4f6;
+            --text-muted: #9ca3af;
+            --text-dim: #6b7280;
+        }
+
+        body {
+            background-color: var(--bg-base) !important;
+            color: var(--text-main);
+            font-family: 'Outfit', 'Inter', sans-serif;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            overflow-x: hidden;
+            padding: 0;
+            margin: 0;
+            position: relative;
+        }
+
+        /* Ambient Glow Backdrop */
+        .bg-glow {
+            position: fixed;
+            width: 45vh;
+            height: 45vh;
+            border-radius: 50%;
+            filter: blur(100px);
+            opacity: 0.08;
+            pointer-events: none;
+            z-index: 0;
+        }
+        .bg-glow-1 {
+            top: -10%;
+            left: -10%;
+            background: radial-gradient(circle, var(--accent-indigo) 0%, transparent 75%);
+            animation: float 12s ease-in-out infinite alternate;
+        }
+        .bg-glow-2 {
+            bottom: -10%;
+            right: -10%;
+            background: radial-gradient(circle, var(--accent-gold) 0%, transparent 75%);
+            animation: float 16s ease-in-out infinite alternate-reverse;
+        }
+        @keyframes float {
+            0% { transform: translate(0, 0) scale(1); }
+            100% { transform: translate(8%, 8%) scale(1.15); }
+        }
+
+        .remote-container {
+            max-width: 440px;
+            margin: 0 auto;
+            width: 100%;
+            padding: 20px 16px;
+            z-index: 10;
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+            flex-grow: 1;
+        }
+
+        .remote-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            border-bottom: 1px solid var(--border-light);
+            padding-bottom: 12px;
+        }
+
+        .remote-header h2 {
+            margin: 0;
+            font-size: 1.25rem;
+            font-weight: 800;
+            color: #ffffff;
+            letter-spacing: -0.5px;
+            background: linear-gradient(135deg, #ffffff 0%, #d1d5db 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .remote-header-badges {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .header-badge {
+            font-size: 0.75rem;
+            font-weight: 700;
+            background: rgba(255, 255, 255, 0.04);
+            padding: 6px 12px;
+            border-radius: 20px;
+            border: 1px solid var(--border-light);
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .header-badge.user-badge {
+            color: var(--accent-gold);
+            border-color: rgba(236, 192, 101, 0.15);
+            background: rgba(236, 192, 101, 0.04);
+        }
+
+        .ping-dot {
+            width: 7px;
+            height: 7px;
+            border-radius: 50%;
+            background-color: var(--accent-emerald);
+            box-shadow: 0 0 6px var(--accent-emerald);
+            display: inline-block;
+        }
+
+        /* Glass Cards */
+        .glass-card {
+            background: var(--bg-card);
+            border: 1px solid var(--border-light);
+            border-radius: 24px;
+            padding: 24px;
+            box-shadow: 
+                0 20px 40px rgba(0, 0, 0, 0.4),
+                inset 0 1px 2px rgba(255, 255, 255, 0.05);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+            align-items: center;
+            text-align: center;
+            position: relative;
+            overflow: hidden;
+            transition: border-color 0.3s;
+        }
+        
+        .pairing-card {
+            border-color: rgba(255, 255, 255, 0.08);
+            margin-top: 40px;
+        }
+        .pairing-card:hover {
+            border-color: rgba(236, 192, 101, 0.15);
+        }
+        .pairing-icon {
+            width: 60px;
+            height: 60px;
+            border-radius: 18px;
+            background: rgba(236, 192, 101, 0.06);
+            border: 1.5px solid rgba(236, 192, 101, 0.15);
+            color: var(--accent-gold);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-bottom: 4px;
+        }
+        .pairing-icon svg {
+            width: 28px;
+            height: 28px;
+        }
+        .pairing-card h3 {
+            font-size: 1.2rem;
+            font-weight: 700;
+            color: #ffffff;
+        }
+        .pairing-card p {
+            font-size: 0.85rem;
+            color: var(--text-muted);
+            line-height: 1.5;
+            max-width: 280px;
+        }
+
+        /* Passcode entry design */
+        .passcode-container {
+            position: relative;
+            width: 260px;
+            margin: 10px 0;
+        }
+        .real-code-input {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            opacity: 0;
+            cursor: pointer;
+            z-index: 5;
+            letter-spacing: 30px;
+        }
+        .passcode-digits {
+            display: flex;
+            justify-content: space-between;
+            gap: 12px;
+            pointer-events: none;
+        }
+        .digit-box {
+            width: 54px;
+            height: 62px;
+            background: rgba(255, 255, 255, 0.02);
+            border: 1.5px solid rgba(255, 255, 255, 0.08);
+            border-radius: 14px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.8rem;
+            font-weight: 800;
+            color: var(--accent-gold);
+            transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+            box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.4);
+        }
+        .real-code-input:focus ~ .passcode-digits .digit-box.active {
+            border-color: var(--accent-gold);
+            box-shadow: 0 0 15px rgba(236, 192, 101, 0.25);
+            background: rgba(236, 192, 101, 0.04);
+        }
+        .digit-box.filled {
+            border-color: rgba(255, 255, 255, 0.2);
+            background: rgba(255, 255, 255, 0.05);
+            box-shadow: 0 0 10px rgba(236, 192, 101, 0.1);
+        }
+
+        .btn-pair {
+            background: linear-gradient(135deg, #ecc065 0%, #d4af37 100%);
+            color: #0b0d19;
+            border: none;
+            font-weight: 700;
+            padding: 14px 28px;
+            border-radius: 14px;
+            cursor: pointer;
+            transition: all 0.25s ease;
+            box-shadow: 0 4px 15px rgba(236, 192, 101, 0.3);
+            width: 100%;
+            max-width: 260px;
+            font-family: inherit;
+            font-size: 0.95rem;
+        }
+
+        .btn-pair:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(236, 192, 101, 0.45);
+        }
+        .btn-pair:active {
+            transform: translateY(0);
+        }
+
+        /* Controller Main Panel */
+        .controller-section {
+            display: none;
+            flex-direction: column;
+            gap: 16px;
+        }
+
+        .controller-section.active {
+            display: flex;
+        }
+
+        .active-movie-status {
+            background: rgba(236, 192, 101, 0.03);
+            border: 1px solid rgba(236, 192, 101, 0.1);
+            border-radius: 16px;
+            padding: 12px 16px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+        }
+
+        .status-pulse {
+            width: 10px;
+            height: 10px;
+            background: var(--accent-gold);
+            border-radius: 50%;
+            box-shadow: 0 0 10px var(--accent-gold);
+            animation: pulse-gold 2s infinite;
+        }
+
+        @keyframes pulse-gold {
+            0% { transform: scale(0.9); box-shadow: 0 0 0 0 rgba(236, 192, 101, 0.6); }
+            70% { transform: scale(1.1); box-shadow: 0 0 0 8px rgba(236, 192, 101, 0); }
+            100% { transform: scale(0.9); box-shadow: 0 0 0 0 rgba(236, 192, 101, 0); }
+        }
+
+        .movie-title-status {
+            font-weight: 700;
+            font-size: 0.9rem;
+            color: #ffffff;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+            letter-spacing: -0.2px;
+        }
+
+        /* Top control bar */
+        .remote-top-bar {
+            display: flex;
+            justify-content: space-between;
+            gap: 12px;
+            width: 100%;
+        }
+
+        .btn-top-ctrl {
+            flex: 1;
+            background: rgba(255, 255, 255, 0.02);
+            border: 1px solid rgba(255, 255, 255, 0.06);
+            color: var(--text-muted);
+            padding: 12px;
+            border-radius: 14px;
+            font-size: 0.82rem;
+            font-weight: 700;
+            cursor: pointer;
+            transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+        }
+
+        .btn-top-ctrl:hover {
+            background: rgba(255, 255, 255, 0.05);
+            border-color: rgba(255, 255, 255, 0.15);
+            color: #ffffff;
+            transform: translateY(-2px);
+        }
+
+        .btn-top-ctrl:active {
+            transform: translateY(0) scale(0.96);
+        }
+
+        .btn-top-ctrl svg {
+            width: 18px;
+            height: 18px;
+            color: var(--text-muted);
+            transition: color 0.25s;
+        }
+
+        .btn-top-ctrl:hover svg {
+            color: var(--accent-gold);
+        }
+
+        /* Circular physical D-Pad design */
+        .cn-dpad-container {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 10px 0;
+        }
+
+        .cn-dpad {
+            position: relative;
+            width: 220px;
+            height: 220px;
+            background: radial-gradient(circle, rgba(20, 24, 45, 0.85) 0%, rgba(10, 12, 22, 0.95) 100%);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            border-radius: 50%;
+            box-shadow: 
+                0 15px 40px rgba(0, 0, 0, 0.5), 
+                inset 0 4px 15px rgba(255, 255, 255, 0.05),
+                inset 0 -4px 15px rgba(0, 0, 0, 0.7);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+        }
+
+        .cn-dpad-btn {
+            position: absolute;
+            background: none;
+            border: none;
+            color: #a0a5b5;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+            outline: none;
+            z-index: 2;
+        }
+
+        .cn-dpad-btn svg {
+            width: 28px;
+            height: 28px;
+            filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.5));
+            transition: transform 0.2s;
+        }
+
+        .cn-dpad-btn:hover {
+            color: #ffffff;
+        }
+
+        .cn-dpad-btn:active {
+            color: var(--accent-gold);
+            transform: scale(0.95);
+        }
+
+        .cn-dpad-btn:active svg {
+            transform: scale(0.85);
+        }
+
+        .cn-dpad-up    { top: 12px; left: 50%; transform: translateX(-50%); width: 70px; height: 48px; }
+        .cn-dpad-down  { bottom: 12px; left: 50%; transform: translateX(-50%); width: 70px; height: 48px; }
+        .cn-dpad-left  { left: 12px; top: 50%; transform: translateY(-50%); width: 48px; height: 70px; }
+        .cn-dpad-right { right: 12px; top: 50%; transform: translateY(-50%); width: 48px; height: 70px; }
+
+        .cn-dpad-center {
+            width: 90px;
+            height: 90px;
+            border-radius: 50%;
+            background: radial-gradient(circle, rgba(28, 33, 58, 0.95) 0%, rgba(16, 19, 34, 0.98) 100%);
+            border: 1px solid rgba(255, 255, 255, 0.12);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.1rem;
+            font-weight: 800;
+            color: var(--accent-gold);
+            cursor: pointer;
+            box-shadow: 
+                0 6px 15px rgba(0, 0, 0, 0.4), 
+                inset 0 2px 5px rgba(255, 255, 255, 0.1);
+            transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+            z-index: 10;
+        }
+
+        .cn-dpad-center:hover {
+            border-color: rgba(236, 192, 101, 0.4);
+            box-shadow: 
+                0 0 20px rgba(236, 192, 101, 0.2),
+                0 6px 15px rgba(0, 0, 0, 0.4);
+        }
+
+        .cn-dpad-center:active {
+            transform: scale(0.93);
+            border-color: var(--accent-gold);
+            box-shadow: 0 0 25px rgba(236, 192, 101, 0.45);
+        }
+
+        /* Decorative radial ring in DPad */
+        .cn-dpad-ring-decor {
+            position: absolute;
+            width: 160px;
+            height: 160px;
+            border: 1px dashed rgba(255, 255, 255, 0.04);
+            border-radius: 50%;
+            pointer-events: none;
+            z-index: 1;
+        }
+
+        /* Hero Seek / Playback Card */
+        .seek-card {
+            background: rgba(18, 22, 38, 0.6);
+            border: 1px solid rgba(236, 192, 101, 0.15);
+            border-radius: 24px;
+            padding: 20px 24px;
+            width: 100%;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 12px;
+            position: relative;
+        }
+
+        .seek-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 3px;
+            background: linear-gradient(90deg, transparent, var(--accent-gold), transparent);
+            opacity: 0.3;
+        }
+
+        .seek-label {
+            font-size: 0.72rem;
+            color: var(--accent-gold);
+            font-weight: 800;
+            text-transform: uppercase;
+            letter-spacing: 1.5px;
+            margin-bottom: 2px;
+        }
+
+        .playback-row {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 24px;
+            width: 100%;
+        }
+
+        .btn-pb {
+            background: rgba(255, 255, 255, 0.02);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            color: #d1d5db;
+            width: 68px;
+            height: 68px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+            position: relative;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.2);
+        }
+
+        .btn-pb svg {
+            width: 28px;
+            height: 28px;
+            transition: transform 0.2s, color 0.2s;
+        }
+
+        .btn-pb:hover {
+            background: rgba(236, 192, 101, 0.05);
+            color: var(--accent-gold);
+            border-color: rgba(236, 192, 101, 0.3);
+            transform: translateY(-2px);
+            box-shadow: 0 6px 15px rgba(236, 192, 101, 0.15);
+        }
+
+        .btn-pb:active {
+            transform: translateY(0) scale(0.94);
+        }
+
+        .btn-pb.play-pause {
+            width: 84px;
+            height: 84px;
+            background: linear-gradient(135deg, #ecc065 0%, #d4af37 100%);
+            border: none;
+            color: #0b0d19;
+            box-shadow: 0 8px 24px rgba(236, 192, 101, 0.35);
+        }
+
+        .btn-pb.play-pause:hover {
+            box-shadow: 0 10px 30px rgba(236, 192, 101, 0.5);
+            transform: scale(1.05) translateY(-2px);
+        }
+
+        .btn-pb.play-pause:active {
+            box-shadow: 0 4px 12px rgba(236, 192, 101, 0.2);
+            transform: scale(0.94) translateY(0);
+        }
+
+        .btn-pb.play-pause svg {
+            width: 36px;
+            height: 36px;
+        }
+
+        /* Refined Toggles Grid */
+        .toggles-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 10px;
+            width: 100%;
+        }
+        .btn-toggle-ctrl {
+            position: relative;
+            background: rgba(255, 255, 255, 0.02);
+            border: 1px solid rgba(255, 255, 255, 0.06);
+            color: #d1d5db;
+            border-radius: 16px;
+            padding: 14px 6px;
+            font-family: inherit;
+            font-size: 0.78rem;
+            font-weight: 700;
+            cursor: pointer;
+            transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            gap: 6px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+        .btn-toggle-ctrl:hover {
+            background: rgba(255, 255, 255, 0.04);
+            border-color: rgba(255, 255, 255, 0.12);
+            transform: translateY(-2px);
+        }
+        .btn-toggle-ctrl:active {
+            transform: translateY(0) scale(0.95);
+        }
+        .btn-toggle-ctrl.active {
+            background: rgba(236, 192, 101, 0.04);
+            border-color: var(--accent-gold);
+            box-shadow: 0 0 15px rgba(236, 192, 101, 0.15);
+            color: #ffffff;
+        }
+        .btn-toggle-ctrl .label {
+            font-size: 0.62rem;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            letter-spacing: 0.8px;
+            font-weight: 800;
+        }
+        .btn-toggle-ctrl.active .label {
+            color: var(--accent-gold);
+        }
+        .toggle-dot {
+            position: absolute;
+            top: 6px;
+            right: 6px;
+            width: 5px;
+            height: 5px;
+            border-radius: 50%;
+            background: rgba(255, 255, 255, 0.2);
+            transition: all 0.3s;
+        }
+        .btn-toggle-ctrl.active .toggle-dot {
+            background: var(--accent-gold);
+            box-shadow: 0 0 8px var(--accent-gold);
+        }
+
+        /* Volume Box */
+        .volume-box {
+            background: rgba(255, 255, 255, 0.01);
+            border: 1px solid rgba(255, 255, 255, 0.05);
+            border-radius: 20px;
+            padding: 14px 18px;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            box-shadow: inset 0 1px 3px rgba(255, 255, 255, 0.01);
+            width: 100%;
+        }
+        .volume-header {
+            display: flex;
+            justify-content: space-between;
+            font-size: 0.75rem;
+            color: var(--text-muted);
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.8px;
+        }
+        .volume-header span:last-child {
+            color: var(--accent-gold);
+        }
+        .volume-slider-group {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+        .volume-slider {
+            flex-grow: 1;
+            height: 6px;
+            appearance: none;
+            -webkit-appearance: none;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 3px;
+            outline: none;
+            cursor: pointer;
+            transition: background 0.3s;
+        }
+        .volume-slider::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            width: 16px;
+            height: 16px;
+            border-radius: 50%;
+            background: var(--accent-gold);
+            cursor: pointer;
+            box-shadow: 0 0 10px rgba(236, 192, 101, 0.6);
+            transition: transform 0.2s;
+        }
+        .volume-slider::-webkit-slider-thumb:hover {
+            transform: scale(1.2);
+        }
+        .btn-mute {
+            background: rgba(255, 255, 255, 0.02);
+            border: 1px solid rgba(255, 255, 255, 0.06);
+            color: var(--text-muted);
+            width: 36px;
+            height: 36px;
+            border-radius: 10px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.2s;
+        }
+        .btn-mute:hover {
+            background: rgba(255, 255, 255, 0.06);
+            color: #ffffff;
+            border-color: rgba(255, 255, 255, 0.12);
+        }
+        .btn-mute:active {
+            transform: scale(0.92);
+        }
+        .btn-mute svg {
+            width: 18px;
+            height: 18px;
+        }
+
+        /* Library Section */
+        .library-section {
+            background: rgba(18, 22, 38, 0.4);
+            border: 1px solid rgba(255, 255, 255, 0.05);
+            border-radius: 20px;
+            padding: 16px;
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            margin-top: 4px;
+            backdrop-filter: blur(14px);
+            -webkit-backdrop-filter: blur(14px);
+            width: 100%;
+        }
+        .library-section h3 {
+            font-size: 1rem;
+            font-weight: 700;
+            color: #ffffff;
+            letter-spacing: -0.3px;
+        }
+        .search-box {
+            display: flex;
+            background: rgba(255, 255, 255, 0.03);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            border-radius: 12px;
+            padding: 10px 14px;
+            align-items: center;
+            gap: 10px;
+            transition: all 0.3s;
+        }
+        .search-box:focus-within {
+            border-color: var(--accent-gold);
+            box-shadow: 0 0 15px rgba(236, 192, 101, 0.15);
+            background: rgba(255, 255, 255, 0.05);
+        }
+        .search-box input {
+            border: none;
+            background: none;
+            color: white;
+            outline: none;
+            width: 100%;
+            font-family: inherit;
+            font-size: 0.88rem;
+        }
+        .search-box input::placeholder {
+            color: var(--text-dim);
+        }
+        
+        .movies-list {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            overflow-y: auto;
+            max-height: 240px;
+            padding-right: 4px;
+        }
+        .movie-item {
+            background: rgba(255, 255, 255, 0.02);
+            border: 1px solid rgba(255, 255, 255, 0.05);
+            border-radius: 14px;
+            padding: 10px 12px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            cursor: pointer;
+            transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        .movie-item:hover, .movie-item:active {
+            background: rgba(236, 192, 101, 0.05);
+            border-color: rgba(236, 192, 101, 0.25);
+            transform: translateY(-2px);
+        }
+        .movie-item:active {
+            transform: translateY(0);
+        }
+        .movie-icon {
+            width: 36px;
+            height: 36px;
+            border-radius: 8px;
+            background: rgba(255, 255, 255, 0.04);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: var(--text-muted);
+            flex-shrink: 0;
+            transition: all 0.3s;
+        }
+        .movie-item:hover .movie-icon {
+            background: rgba(236, 192, 101, 0.1);
+            color: var(--accent-gold);
+        }
+        .movie-info {
+            display: flex;
+            flex-direction: column;
+            gap: 3px;
+            text-align: left;
+            overflow: hidden;
+            flex-grow: 1;
+        }
+        .movie-name {
+            font-size: 0.88rem;
+            font-weight: 600;
+            color: #eeeeee;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+        .movie-meta {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            font-size: 0.7rem;
+            color: var(--text-muted);
+        }
+        .meta-badge {
+            background: rgba(255, 255, 255, 0.05);
+            padding: 1px 5px;
+            border-radius: 4px;
+            text-transform: uppercase;
+            font-weight: 700;
+            font-size: 0.6rem;
+            letter-spacing: 0.3px;
+        }
+        .btn-play-movie {
+            width: 28px;
+            height: 28px;
+            border-radius: 50%;
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            color: var(--text-muted);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: all 0.25s;
+            flex-shrink: 0;
+        }
+        .btn-play-movie svg {
+            width: 12px;
+            height: 12px;
+            transform: translateX(1px);
+        }
+        .movie-item:hover .btn-play-movie, .movie-item:active .btn-play-movie {
+            background: var(--accent-gold);
+            border-color: var(--accent-gold);
+            color: #060813;
+            box-shadow: 0 0 10px rgba(236, 192, 101, 0.4);
+            transform: scale(1.08);
+        }
+
+        /* Toast Container */
+        .toast-container {
+            position: fixed;
+            bottom: 24px;
+            left: 50%;
+            transform: translateX(-50%);
+            z-index: 1000;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            width: calc(100% - 32px);
+            max-width: 320px;
+        }
+        .toast {
+            background: rgba(18, 22, 38, 0.9);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            border-radius: 12px;
+            padding: 12px 16px;
+            color: #ffffff;
+            font-size: 0.85rem;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.5);
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+        }
+        .toast.success {
+            border-color: rgba(16, 185, 129, 0.3);
+            background: rgba(12, 28, 22, 0.9);
+        }
+        .toast.error {
+            border-color: rgba(239, 68, 68, 0.3);
+            background: rgba(28, 12, 12, 0.9);
+        }
+        .toast-icon {
+            width: 18px;
+            height: 18px;
+            flex-shrink: 0;
+        }
+    </style>
+</head>
+<body>
+    <!-- Ambient Glow Backdrop -->
+    <div class="bg-glow bg-glow-1"></div>
+    <div class="bg-glow bg-glow-2"></div>
+
+    <div class="remote-container">
+        <header class="remote-header">
+            <h2>ChevronNexus Remote</h2>
+            <div class="remote-header-badges">
+                <span class="header-badge user-badge" title="Active Connection User Session">
+                    <svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2.5" style="color: var(--accent-gold); vertical-align: middle;">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M15.75 6a3.75 3.75 0 11-7.5 0 3.75 3.75 0 017.5 0zM4.501 20.118a7.5 7.5 0 0114.998 0A17.933 17.933 0 0112 21.75c-2.676 0-5.216-.584-7.499-1.632z" />
+                    </svg>
+                    <span id="user-name-display">Guest</span>
+                </span>
+                <span class="header-badge latency-badge" title="Network Connection Latency Ping">
+                    <span class="ping-dot" id="ping-dot"></span>
+                    <span id="ping-text">--ms</span>
+                </span>
+            </div>
+        </header>
+
+        <!-- Pairing Card -->
+        <div class="glass-card pairing-card" id="pairing-card">
+            <div class="pairing-icon">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M9 3.75H6.912a2.25 2.25 0 00-2.152 1.63L3 19.5a2.25 2.25 0 002.248 2.5h13.5A2.25 2.25 0 0021 19.5l-1.76-14.12a2.25 2.25 0 00-2.152-1.63H15M9 3.75a2.25 2.25 0 014.5 0M9 3.75h4.5m-12 9h19.5" />
+                </svg>
+            </div>
+            <h3>Pair with TV Screen</h3>
+            <p>Enter the 4-digit room code displayed on your TV or Projector screen to begin remote control.</p>
+            <div class="passcode-container">
+                <input type="tel" maxlength="4" placeholder="" class="real-code-input" id="code-input" autocomplete="off" autofocus>
+                <div class="passcode-digits">
+                    <div class="digit-box" data-index="0"></div>
+                    <div class="digit-box" data-index="1"></div>
+                    <div class="digit-box" data-index="2"></div>
+                    <div class="digit-box" data-index="3"></div>
+                </div>
+            </div>
+            <button class="btn-pair" id="btn-pair">Connect Device</button>
+        </div>
+
+        <!-- Controller Section -->
+        <div class="controller-section" id="controller-ui">
+            <div class="active-movie-status">
+                <div class="status-pulse"></div>
+                <div style="flex-grow: 1; overflow: hidden;">
+                    <span class="movie-title-status" id="active-movie-title">Connected to TV Screen</span>
+                </div>
+            </div>
+
+            <!-- Top Tool Row -->
+            <div class="remote-top-bar">
+                <button class="btn-top-ctrl" id="btn-remote-back" title="Back to Library">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M9 15L3 9m0 0l6-6M3 9h12a6 6 0 010 12h-3" />
+                    </svg>
+                    <span>Library</span>
+                </button>
+                <button class="btn-top-ctrl" id="btn-remote-fs" title="Toggle Fullscreen">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M3.75 3.75v4.5m0-4.5h4.5m-4.5 0L9 9M3.75 20.25v-4.5m0 4.5h4.5m-4.5 0L9 15M20.25 3.75h-4.5m4.5 0v4.5m0-4.5L15 9m5.25 11.25h-4.5m4.5 0v-4.5m0 4.5L15 15" />
+                    </svg>
+                    <span>Fullscreen</span>
+                </button>
+            </div>
+
+            <!-- D-Pad Navigation Controls -->
+            <div class="cn-dpad-container">
+                <div class="cn-dpad">
+                    <div class="cn-dpad-ring-decor"></div>
+                    <button class="cn-dpad-btn cn-dpad-up" id="btn-remote-up" title="Up / Focus">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M4.5 15.75l7.5-7.5 7.5 7.5" />
+                        </svg>
+                    </button>
+                    <button class="cn-dpad-btn cn-dpad-left" id="btn-remote-left" title="Left / Focus">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M15.75 19.5L8.25 12l7.5-7.5" />
+                        </svg>
+                    </button>
+                    <button class="cn-dpad-center" id="btn-remote-ok" title="OK / Enter">
+                        <span>OK</span>
+                    </button>
+                    <button class="cn-dpad-btn cn-dpad-right" id="btn-remote-right" title="Right / Focus">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M8.25 4.5l7.5 7.5-7.5 7.5" />
+                        </svg>
+                    </button>
+                    <button class="cn-dpad-btn cn-dpad-down" id="btn-remote-down" title="Down / Focus">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M19.5 8.25l-7.5 7.5-7.5-7.5" />
+                        </svg>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Hero Seek Card (10s Back, Play/Pause, 10s Fwd) -->
+            <div class="seek-card">
+                <span class="seek-label">Tactile Playback & Seek</span>
+                <div class="playback-row">
+                    <button class="btn-pb" id="btn-remote-skip-back" title="Rewind 10s">
+                        <!-- Custom circular rewind 10s SVG icon -->
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="transform: rotate(-10deg);">
+                            <path d="M12 2A10 10 0 0 0 2.2 11.5L1.1 10.4M2.2 11.5h4.4" stroke-linecap="round" stroke-linejoin="round"/>
+                            <text x="12" y="15.5" font-size="7.5" font-family="'Outfit', sans-serif" font-weight="900" fill="currentColor" text-anchor="middle">10</text>
+                        </svg>
+                    </button>
+                    <button class="btn-pb play-pause" id="btn-remote-play" title="Play / Pause">
+                        <svg viewBox="0 0 24 24" fill="currentColor">
+                            <path d="M8 5v14l11-7z" id="play-svg-icon"/>
+                        </svg>
+                    </button>
+                    <button class="btn-pb" id="btn-remote-skip-fwd" title="Forward 10s">
+                        <!-- Custom circular forward 10s SVG icon -->
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="transform: rotate(10deg);">
+                            <path d="M12 2a10 10 0 0 1 9.8 9.5l1.1-1.1M21.8 11.5H17.4" stroke-linecap="round" stroke-linejoin="round"/>
+                            <text x="12" y="15.5" font-size="7.5" font-family="'Outfit', sans-serif" font-weight="900" fill="currentColor" text-anchor="middle">10</text>
+                        </svg>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Refined Toggles Grid -->
+            <div class="toggles-grid">
+                <button class="btn-toggle-ctrl" id="btn-remote-hdr" title="HDR Boost Toggle">
+                    <span class="toggle-dot"></span>
+                    <span style="font-weight:900; font-size:1.05rem; color:#ecc065;">HDR</span>
+                    <span class="label">Boost</span>
+                </button>
+                <button class="btn-toggle-ctrl" id="btn-remote-dolby" title="Dolby Passthrough Toggle">
+                    <span class="toggle-dot"></span>
+                    <span style="font-weight:900; font-size:1.05rem; color:#7eb8e5;">DOLBY</span>
+                    <span class="label">Passthrough</span>
+                </button>
+                <button class="btn-toggle-ctrl" id="btn-remote-speed" title="Cycle Playback Speed">
+                    <span class="toggle-dot"></span>
+                    <span id="remote-speed-label" style="font-weight:900; font-size:1.05rem; color:#ffffff;">1.0x</span>
+                    <span class="label">Speed</span>
+                </button>
+                <button class="btn-toggle-ctrl" id="btn-remote-cc" title="Cycle Subtitles">
+                    <span class="toggle-dot"></span>
+                    <span style="font-weight:900; font-size:1.05rem; color:#ffffff;">CC</span>
+                    <span class="label">Subtitles</span>
+                </button>
+                <button class="btn-toggle-ctrl" id="btn-remote-audio" title="Cycle Audio Track">
+                    <span class="toggle-dot"></span>
+                    <span style="font-weight:900; font-size:1.05rem; color:#ffffff;">AUDIO</span>
+                    <span class="label">Track</span>
+                </button>
+                <button class="btn-toggle-ctrl" id="btn-remote-refresh" title="Reconnect Remote">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" style="width:20px; height:20px; color:#a0a5b5;">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M16.023 9.348h4.992v-.001M2.985 19.644v-4.992m0 0h4.992m-4.993 0l3.181 3.183a8.25 8.25 0 0013.803-3.7M4.031 9.865a8.25 8.25 0 0113.803-3.7l3.181 3.182m0-4.991v4.99" />
+                    </svg>
+                    <span class="label">Sync</span>
+                </button>
+            </div>
+
+            <!-- Volume Control slider -->
+            <div class="volume-box">
+                <div class="volume-header">
+                    <span>Volume Control</span>
+                    <span id="volume-val">100%</span>
+                </div>
+                <div class="volume-slider-group">
+                    <button class="btn-mute" id="btn-remote-mute">
+                        <svg viewBox="0 0 24 24" fill="currentColor" id="mute-svg-icon">
+                            <path d="M3 9v6h4l5 5V4L7 9H3zm13.5 3c0-1.77-1.02-3.29-2.5-4.03v8.05c1.48-.73 2.5-2.25 2.5-4.02zM14 3.23v2.06c2.89.86 5 3.54 5 6.71s-2.11 5.85-5 6.71v2.06c4.01-.91 7-4.49 7-8.77s-2.99-7.86-7-8.77z"/>
+                        </svg>
+                    </button>
+                    <input type="range" class="volume-slider" id="volume-range" min="0" max="1" step="0.05" value="1">
+                </div>
+            </div>
+
+            <!-- Library Selector -->
+            <div class="library-section">
+                <h3>Select Movie to Play</h3>
+                <div class="search-box">
+                    <input type="text" id="movie-search" placeholder="Search movies...">
+                </div>
+                <div class="movies-list" id="movies-list">
+                    <!-- Populated dynamically -->
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="toast-container" id="toast-container"></div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+
+            // ── State ──────────────────────────────────────────────────────────
+            var roomCode      = '';
+            var movies        = [];
+            var isMuted       = false;
+            var currentVolume = 1.0;
+            var isPlaying     = false;
+            var currentSpeed  = 1.0;
+            var speeds        = [0.5, 0.75, 1.0, 1.25, 1.5, 2.0];
+            var tvStatus      = null;   // latest player_status from SSE
+            var sseSource     = null;
+            
+            var phoneUser     = '';
+            var tvUser        = '';
+            var pingInterval  = null;
+
+            // ── Element refs ───────────────────────────────────────────────────
+            var el = {
+                pairingCard:       document.getElementById('pairing-card'),
+                codeInput:         document.getElementById('code-input'),
+                btnPair:           document.getElementById('btn-pair'),
+                pairingStatus:     document.getElementById('user-name-display'),
+                controllerUi:      document.getElementById('controller-ui'),
+                activeMovieTitle:  document.getElementById('active-movie-title'),
+                moviesList:        document.getElementById('movies-list'),
+                movieSearch:       document.getElementById('movie-search'),
+                btnPlay:           document.getElementById('btn-remote-play'),
+                btnBack:           document.getElementById('btn-remote-back'),
+                btnUp:             document.getElementById('btn-remote-up'),
+                btnDown:           document.getElementById('btn-remote-down'),
+                btnLeft:           document.getElementById('btn-remote-left'),
+                btnRight:          document.getElementById('btn-remote-right'),
+                btnOk:             document.getElementById('btn-remote-ok'),
+                btnSkipBack:       document.getElementById('btn-remote-skip-back'),
+                btnSkipFwd:        document.getElementById('btn-remote-skip-fwd'),
+                btnMute:           document.getElementById('btn-remote-mute'),
+                btnFs:             document.getElementById('btn-remote-fs'),
+                btnHdr:            document.getElementById('btn-remote-hdr'),
+                btnDolby:          document.getElementById('btn-remote-dolby'),
+                btnSpeed:          document.getElementById('btn-remote-speed'),
+                btnCc:             document.getElementById('btn-remote-cc'),
+                btnAudio:          document.getElementById('btn-remote-audio'),
+                btnRefresh:        document.getElementById('btn-remote-refresh'),
+                volumeRange:       document.getElementById('volume-range'),
+                volumeVal:         document.getElementById('volume-val'),
+                speedLabel:        document.getElementById('remote-speed-label'),
+                toastContainer:    document.getElementById('toast-container')
+            };
+
+            var pauseSvg = '<svg viewBox="0 0 24 24" fill="currentColor"><path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z"/></svg>';
+            var playSvg  = '<svg viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg>';
+
+            // ── User Identity & Ping ──────────────────────────────────────────
+            function updateIdentityDisplay() {
+                var nameText = 'Guest';
+                if (phoneUser) {
+                    nameText = phoneUser;
+                } else if (tvUser) {
+                    nameText = tvUser;
+                }
+                var userDisplay = document.getElementById('user-name-display');
+                if (userDisplay) {
+                    userDisplay.textContent = nameText;
+                }
+            }
+
+            function fetchPhoneIdentity() {
+                fetch('/api/auth/session')
+                    .then(function(res) { return res.json(); })
+                    .then(function(data) {
+                        if (data.logged_in) {
+                            phoneUser = data.name || data.username;
+                            updateIdentityDisplay();
+                        }
+                    })
+                    .catch(function(e) {
+                        console.warn("Failed to fetch session identity:", e);
+                    });
+            }
+
+            function startPing() {
+                if (pingInterval) clearInterval(pingInterval);
+                
+                var pingText = document.getElementById('ping-text');
+                var pingDot = document.getElementById('ping-dot');
+
+                function measure() {
+                    var start = Date.now();
+                    fetch('/api/auth/session')
+                        .then(function(res) { return res.json(); })
+                        .then(function() {
+                            var latency = Date.now() - start;
+                            if (pingText) pingText.textContent = latency + 'ms';
+                            if (pingDot) {
+                                if (latency < 40) {
+                                    pingDot.style.backgroundColor = '#10b981';
+                                    pingDot.style.boxShadow = '0 0 8px #10b981';
+                                } else if (latency < 120) {
+                                    pingDot.style.backgroundColor = '#ecc065';
+                                    pingDot.style.boxShadow = '0 0 8px #ecc065';
+                                } else {
+                                    pingDot.style.backgroundColor = '#ef4444';
+                                    pingDot.style.boxShadow = '0 0 8px #ef4444';
+                                }
+                            }
+                        })
+                        .catch(function() {
+                            if (pingText) pingText.textContent = 'Offline';
+                            if (pingDot) {
+                                pingDot.style.backgroundColor = '#ef4444';
+                                pingDot.style.boxShadow = '0 0 8px #ef4444';
+                            }
+                        });
+                }
+                
+                measure();
+                pingInterval = setInterval(measure, 3000);
+            }
+
+            // Fetch session details on load
+            fetchPhoneIdentity();
+            startPing();
+
+            // ── Pairing ────────────────────────────────────────────────────────
+            var urlParams = new URLSearchParams(window.location.search);
+            var codeParam = urlParams.get('code') || localStorage.getItem('cn_room_code');
+            
+            // Code input digitization
+            var digitBoxes = document.querySelectorAll('.digit-box');
+            function updatePasscodeUI() {
+                var val = el.codeInput.value;
+                for (var i = 0; i < 4; i++) {
+                    if (i < val.length) {
+                        digitBoxes[i].textContent = val[i];
+                        digitBoxes[i].classList.add('filled');
+                        digitBoxes[i].classList.remove('active');
+                    } else {
+                        digitBoxes[i].textContent = '';
+                        digitBoxes[i].classList.remove('filled');
+                        if (i === val.length) {
+                            digitBoxes[i].classList.add('active');
+                        } else {
+                            digitBoxes[i].classList.remove('active');
+                        }
+                    }
+                }
+            }
+
+            if (el.codeInput) {
+                el.codeInput.addEventListener('input', function() {
+                    this.value = this.value.replace(/[^0-9]/g, '');
+                    updatePasscodeUI();
+                    if (this.value.length === 4) {
+                        pairRoom(this.value);
+                    }
+                });
+                el.codeInput.addEventListener('focus', updatePasscodeUI);
+                el.codeInput.addEventListener('blur', function() {
+                    for (var i = 0; i < 4; i++) {
+                        digitBoxes[i].classList.remove('active');
+                    }
+                });
+            }
+
+            if (codeParam) {
+                el.codeInput.value = codeParam;
+                updatePasscodeUI();
+                pairRoom(codeParam);
+            }
+
+            el.btnPair.addEventListener('click', function() {
+                var code = el.codeInput.value.trim();
+                if (code.length === 4) pairRoom(code);
+            });
+
+            function pairRoom(code) {
+                roomCode = code;
+                localStorage.setItem('cn_room_code', code);
+                el.pairingCard.style.display = 'none';
+                el.controllerUi.classList.add('active');
+                
+                fetch('/api/movies')
+                    .then(function(r) { return r.json(); })
+                    .then(function(d) { movies = d.movies || []; renderMovies(''); })
+                    .catch(function(e) { console.warn('Movies fetch failed:', e); });
+                setupSSE();
+            }
+
+            // ── Send command to TV player ──────────────────────────────────────
+            function sendCmd(command, value) {
+                if (!roomCode) return;
+                if (value === undefined) value = '';
+                fetch('/api/player/command/' + roomCode, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ command: command, value: value })
+                }).then(function(r) {
+                    if (r.status === 404) {
+                        localStorage.removeItem('cn_room_code');
+                        alert('TV session disconnected. Check the room code.');
+                        location.reload();
+                    }
+                });
+            }
+
+            // ── Button bindings ────────────────────────────────────────────────
+            el.btnPlay.addEventListener('click', function() {
+                isPlaying = !isPlaying;
+                el.btnPlay.innerHTML = isPlaying ? pauseSvg : playSvg;
+                sendCmd('toggle_play');
+            });
+            el.btnUp.addEventListener('click',       function() { sendCmd('key_up'); });
+            el.btnDown.addEventListener('click',     function() { sendCmd('key_down'); });
+            el.btnLeft.addEventListener('click',     function() { sendCmd('skip_back'); });
+            el.btnRight.addEventListener('click',    function() { sendCmd('skip_forward'); });
+            el.btnOk.addEventListener('click',       function() { sendCmd('toggle_play'); });
+            el.btnSkipBack.addEventListener('click', function() { sendCmd('skip_back'); });
+            el.btnSkipFwd.addEventListener('click',  function() { sendCmd('skip_forward'); });
+            el.btnBack.addEventListener('click',     function() { sendCmd('back'); });
+            el.btnFs.addEventListener('click',       function() { sendCmd('toggle_fullscreen'); });
+            el.btnHdr.addEventListener('click',      function() { this.classList.toggle('active'); sendCmd('toggle_hdr'); });
+            el.btnDolby.addEventListener('click',    function() { this.classList.toggle('active'); sendCmd('toggle_dolby'); });
+            el.btnCc.addEventListener('click',       function() { this.classList.toggle('active'); sendCmd('toggle_subtitles'); });
+            el.btnAudio.addEventListener('click',    function() { this.classList.toggle('active'); sendCmd('toggle_audio'); });
+            el.btnRefresh.addEventListener('click',  function() { location.reload(); });
+
+            el.btnSpeed.addEventListener('click', function() {
+                var idx = speeds.indexOf(currentSpeed);
+                if (idx === -1) idx = 2;
+                currentSpeed = speeds[(idx + 1) % speeds.length];
+                el.speedLabel.textContent = currentSpeed + 'x';
+                sendCmd('set_speed', currentSpeed);
+            });
+
+            el.btnMute.addEventListener('click', function() {
+                isMuted = !isMuted;
+                sendCmd('toggle_mute');
+                updateMuteIcon();
+            });
+
+            el.volumeRange.addEventListener('input', function(e) {
+                currentVolume = parseFloat(e.target.value);
+                el.volumeVal.textContent = Math.round(currentVolume * 100) + '%';
+                sendCmd('set_volume', currentVolume);
+            });
+
+            function updateMuteIcon() {
+                var ico = document.getElementById('mute-svg-icon');
+                if (!ico) return;
+                ico.innerHTML = isMuted
+                    ? '<path d="M16.5 12c0-1.77-1.02-3.29-2.5-4.03v2.21l2.45 2.45c.03-.21.05-.42.05-.63zm2.5 0c0 .94-.2 1.82-.54 2.64l1.51 1.51C20.63 14.91 21 13.5 21 12c0-4.28-2.99-7.86-7-8.77v2.06c2.89.86 5 3.54 5 6.71zM4.27 3L3 4.27 7.73 9H3v6h4l5 5v-6.73l4.25 4.25c-.67.52-1.42.93-2.25 1.18v2.06c1.38-.31 2.63-.95 3.69-1.81L19.73 21 21 19.73l-9-9L4.27 3zM12 4L9.91 6.09 12 8.18V4z"/>'
+                    : '<path d="M3 9v6h4l5 5V4L7 9H3zm13.5 3c0-1.77-1.02-3.29-2.5-4.03v8.05c1.48-.73 2.5-2.25 2.5-4.02zM14 3.23v2.06c2.89.86 5 3.54 5 6.71s-2.11 5.85-5 6.71v2.06c4.01-.91 7-4.49 7-8.77s-2.99-7.86-7-8.77z"/>';
+            }
+
+            // ── Movie library ──────────────────────────────────────────────────
+            function renderMovies(search) {
+                el.moviesList.innerHTML = '';
+                movies.filter(function(m) {
+                    return m.name.toLowerCase().indexOf(search.toLowerCase()) > -1;
+                }).forEach(function(movie) {
+                    var item = document.createElement('div');
+                    item.className = 'movie-item';
+                    var name = movie.name.replace(/\.[^/.]+$/, '');
+                    var ext = movie.format || 'MP4';
+                    
+                    item.innerHTML =
+                        '<div class="movie-icon">' +
+                        '<svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M7 4v16M17 4v16M3 8h4m10 0h4M3 12h18M3 16h4m10 0h4M4 20h16a1 1 0 001-1V5a1 1 0 00-1-1H4a1 1 0 00-1 1v14a1 1 0 001 1z"/></svg>' +
+                        '</div>' +
+                        '<div class="movie-info">' +
+                        '<span class="movie-name">' + name + '</span>' +
+                        '<div class="movie-meta">' +
+                        '<span>' + fmtBytes(movie.size) + '</span>' +
+                        '<span class="meta-badge">' + ext + '</span>' +
+                        '</div>' +
+                        '</div>' +
+                        '<button class="btn-play-movie" title="Play Movie">' +
+                        '<svg viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg>' +
+                        '</button>';
+                        
+                    item.addEventListener('click', function(e) {
+                        e.stopPropagation();
+                        sendCmd('play_movie', movie.relative_path);
+                        el.activeMovieTitle.textContent = name;
+                        isPlaying = true;
+                        el.btnPlay.innerHTML = pauseSvg;
+                    });
+                    el.moviesList.appendChild(item);
+                });
+            }
+            el.movieSearch.addEventListener('input', function(e) { renderMovies(e.target.value); });
+
+            function fmtBytes(b) {
+                if (!b) return '0 B';
+                var k = 1024, s = ['B', 'KB', 'MB', 'GB'];
+                var i = Math.floor(Math.log(b) / Math.log(k));
+                return (b / Math.pow(k, i)).toFixed(1) + ' ' + s[i];
+            }
+
+            // ── SSE: receive TV player status updates ──────────────────────────
+            function setupSSE() {
+                if (sseSource) { try { sseSource.close(); } catch(e) {} }
+                sseSource = new EventSource('/api/player/stream/' + roomCode);
+
+                sseSource.onmessage = function(evt) {
+                    var data = evt.data;
+                    if (data === 'ping') return;
+
+                    var cmd = data, val = '';
+                    var ci  = data.indexOf(':');
+                    if (ci !== -1) { cmd = data.substring(0, ci); val = data.substring(ci + 1); }
+
+                    if (cmd === 'player_status') {
+                        var p = val.split('|');
+                        if (p.length >= 4) {
+                            tvStatus = {
+                                moviePath: p[0],
+                                token:     p[1],
+                                playing:   p[2] === 'true',
+                                time:      parseFloat(p[3] || 0),
+                                duration:  parseFloat(p[4] || 0),
+                                speed:     parseFloat(p[5] || 1.0)
+                            };
+                            
+                            if (p.length >= 7) {
+                                tvUser = decodeURIComponent(p[6]);
+                                updateIdentityDisplay();
+                            }
+
+                            // Update play/pause button
+                            isPlaying = tvStatus.playing;
+                            el.btnPlay.innerHTML = isPlaying ? pauseSvg : playSvg;
+                            
+                            // Update active film title
+                            var filename = tvStatus.moviePath.split('/').pop();
+                            var title = filename.replace(/\.[^/.]+$/, '');
+                            el.activeMovieTitle.textContent = title || 'Playing on TV';
+                        }
+                    }
+                };
+
+                sseSource.onerror = function() {
+                    // Auto-reconnect handled by EventSource
+                };
+            }
+
+            // ── Toast notification ─────────────────────────────────────────────
+            function showToast(msg, type) {
+                if (!el.toastContainer) return;
+                var t   = document.createElement('div');
+                t.className = 'toast ' + (type || 'info');
+                var ico = '';
+                if (type === 'success') ico = '<svg viewBox="0 0 24 24" class="toast-icon" fill="none" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>';
+                if (type === 'error')   ico = '<svg viewBox="0 0 24 24" class="toast-icon" fill="none" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M12 9v3.75m9-.75a9 9 0 11-18 0 9 9 0 0118 0zm-9 3.75h.008v.008H12v-.008z"/></svg>';
+                t.innerHTML = ico + '<span>' + msg + '</span>';
+                el.toastContainer.appendChild(t);
+                setTimeout(function() {
+                    t.style.transition = 'opacity 0.5s';
+                    t.style.opacity    = '0';
+                    setTimeout(function() { t.remove(); }, 500);
+                }, 4000);
+            }
+
+        });
+    </script>
+</body>
+</html>

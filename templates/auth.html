@@ -1,0 +1,917 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ChevronNexus - Secure Local Media Share & Home Theater</title>
+    <link rel="stylesheet" href="/static/css/style.css">
+    <link href="https://fonts.googleapis.com/css2?family=Fira+Code:wght@400;500&family=Inter:wght@300;400;500;600&family=Outfit:wght@400;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        /* Antigravity IDE Tech Theme Styles */
+        body.auth-page {
+            font-family: 'Inter', sans-serif;
+            background-color: #08090e !important;
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+            overflow-y: auto;
+            position: relative;
+        }
+
+        /* Tech Grid Background */
+        body.auth-page::before {
+            content: '';
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-image: 
+                linear-gradient(rgba(0, 240, 255, 0.015) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(0, 240, 255, 0.015) 1px, transparent 1px);
+            background-size: 30px 30px;
+            z-index: -2;
+            pointer-events: none;
+        }
+
+        /* Ambient tech glows */
+        .tech-glow-cyan {
+            position: fixed;
+            width: 400px;
+            height: 400px;
+            background: radial-gradient(circle, rgba(0, 240, 255, 0.06) 0%, transparent 70%);
+            top: -100px;
+            left: -100px;
+            z-index: -1;
+            filter: blur(80px);
+            pointer-events: none;
+            animation: driftGlow1 20s infinite alternate ease-in-out;
+        }
+
+        .tech-glow-purple {
+            position: fixed;
+            width: 450px;
+            height: 450px;
+            background: radial-gradient(circle, rgba(189, 0, 255, 0.05) 0%, transparent 70%);
+            bottom: -150px;
+            right: -100px;
+            z-index: -1;
+            filter: blur(90px);
+            pointer-events: none;
+            animation: driftGlow2 24s infinite alternate ease-in-out;
+        }
+
+        .landing-wrapper {
+            width: 100%;
+            max-width: 1240px;
+            display: grid;
+            grid-template-columns: 1.3fr 1fr;
+            gap: 40px;
+            align-items: center;
+            padding: 20px;
+            z-index: 10;
+        }
+
+        @media (max-width: 1024px) {
+            .landing-wrapper {
+                grid-template-columns: 1fr;
+                gap: 40px;
+            }
+        }
+
+        /* Custom Cursor follow element styles */
+        .custom-cursor {
+            width: 20px;
+            height: 20px;
+            border: 2px solid #00f0ff;
+            border-radius: 50%;
+            position: fixed;
+            pointer-events: none;
+            z-index: 10000;
+            margin-left: -10px;
+            margin-top: -10px;
+            box-shadow: 0 0 10px rgba(0, 240, 255, 0.4);
+            opacity: 0;
+            top: 0;
+            left: 0;
+            will-change: transform;
+            transform: translate3d(-100px, -100px, 0) scale(1);
+            transition: opacity 0.3s ease, border-color 0.25s ease, background-color 0.25s ease, box-shadow 0.25s ease;
+        }
+
+        /* Active hover sizing */
+        .custom-cursor.hovering {
+            border-color: #bd00ff;
+            box-shadow: 0 0 15px rgba(189, 0, 255, 0.6);
+            background: rgba(189, 0, 255, 0.05);
+        }
+
+        /* About Section Panel styles */
+        .about-section-panel {
+            background: rgba(13, 15, 25, 0.7);
+            border: 1px solid rgba(0, 240, 255, 0.15);
+            border-radius: 12px;
+            padding: 40px;
+            box-shadow: 0 20px 50px rgba(0, 0, 0, 0.5), inset 0 1px 0 rgba(255, 255, 255, 0.05), 0 0 35px rgba(0, 240, 255, 0.03);
+            display: flex;
+            flex-direction: column;
+            gap: 28px;
+            position: relative;
+            min-height: 580px;
+            height: auto;
+            justify-content: center;
+        }
+
+        @media (max-width: 768px) {
+            .about-section-panel {
+                padding: 24px;
+                height: auto;
+            }
+        }
+
+        .about-header {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .about-system-tag {
+            font-family: 'Fira Code', monospace;
+            font-size: 0.72rem;
+            color: #00f0ff;
+            letter-spacing: 2px;
+            font-weight: 600;
+        }
+
+        .about-title {
+            font-family: 'Outfit', sans-serif;
+            font-size: 2.2rem;
+            font-weight: 800;
+            line-height: 1.15;
+            color: #ffffff;
+            letter-spacing: -0.5px;
+        }
+
+        .about-subtitle {
+            font-size: 0.9rem;
+            color: #7d859a;
+            line-height: 1.4;
+        }
+
+        .about-specs-grid {
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+
+        .spec-node {
+            display: flex;
+            gap: 16px;
+            align-items: flex-start;
+        }
+
+        .spec-icon {
+            font-size: 1.25rem;
+            background: rgba(0, 240, 255, 0.06);
+            border: 1px solid rgba(0, 240, 255, 0.15);
+            padding: 8px;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 38px;
+            height: 38px;
+            flex-shrink: 0;
+            color: #00f0ff;
+            box-shadow: 0 0 10px rgba(0, 240, 255, 0.15);
+        }
+
+        .spec-content h5 {
+            font-family: 'Outfit', sans-serif;
+            font-size: 1rem;
+            font-weight: 600;
+            color: #ffffff;
+            margin-bottom: 4px;
+        }
+
+        .spec-content p {
+            font-size: 0.84rem;
+            color: #7d859a;
+            line-height: 1.4;
+        }
+
+        .sys-metrics-box {
+            background: rgba(0, 0, 0, 0.35);
+            border: 1px solid rgba(255, 255, 255, 0.04);
+            padding: 16px;
+            border-radius: 6px;
+            font-family: 'Fira Code', monospace;
+            font-size: 0.76rem;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .metric-line {
+            display: flex;
+            justify-content: space-between;
+        }
+
+        .metric-line .label {
+            color: #4b5263;
+        }
+
+        .metric-line .value {
+            color: #00f0ff;
+        }
+
+        .metric-line .value.success {
+            color: #27c93f;
+        }
+
+        /* IDE Right Auth Panel wrapper (Sleek Cyber container) */
+        .auth-card-wrapper {
+            position: relative;
+            width: 100%;
+        }
+
+        /* Cyan/Purple tech borders */
+        .auth-card.glass {
+            border: 1px solid rgba(0, 240, 255, 0.15);
+            background: rgba(10, 12, 22, 0.8);
+            backdrop-filter: blur(20px) saturate(160%);
+            -webkit-backdrop-filter: blur(20px) saturate(160%);
+            padding: 44px;
+            border-radius: 12px;
+            box-shadow: 0 30px 60px rgba(0, 0, 0, 0.6), 0 0 40px rgba(0, 240, 255, 0.04);
+            width: 100%;
+            position: relative;
+            overflow: hidden;
+        }
+
+        /* Laser scanning effect lines on login card border */
+        .auth-card.glass::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 50%;
+            height: 2px;
+            background: linear-gradient(90deg, transparent, #00f0ff, transparent);
+            animation: borderScan 6s infinite linear;
+        }
+
+        @keyframes borderScan {
+            0% { left: -100%; }
+            100% { left: 200%; }
+        }
+
+        /* Cyberpunk Corner brackets */
+        .cyber-corner {
+            position: absolute;
+            width: 10px;
+            height: 10px;
+            border: 2px solid #00f0ff;
+            pointer-events: none;
+        }
+
+        .cyber-corner.top-left { top: 12px; left: 12px; border-right: none; border-bottom: none; }
+        .cyber-corner.top-right { top: 12px; right: 12px; border-left: none; border-bottom: none; }
+        .cyber-corner.bottom-left { bottom: 12px; left: 12px; border-right: none; border-top: none; }
+        .cyber-corner.bottom-right { bottom: 12px; right: 12px; border-left: none; border-top: none; }
+
+        .auth-tabs {
+            background: rgba(0, 0, 0, 0.4);
+            border: 1px solid rgba(0, 240, 255, 0.1);
+            padding: 4px;
+            border-radius: 6px;
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 4px;
+            margin-bottom: 30px;
+        }
+
+        .auth-tab-btn {
+            background: transparent;
+            border: none;
+            color: #7d859a;
+            padding: 10px;
+            font-size: 0.9rem;
+            font-family: 'Fira Code', monospace;
+            font-weight: 500;
+            border-radius: 4px;
+            cursor: pointer;
+            transition: all var(--transition-fast);
+        }
+
+        .auth-tab-btn:hover {
+            color: #ffffff;
+        }
+
+        .auth-tab-btn.active {
+            background: rgba(0, 240, 255, 0.08);
+            color: #00f0ff;
+            border: 1px solid rgba(0, 240, 255, 0.15);
+            box-shadow: 0 0 10px rgba(0, 240, 255, 0.1);
+        }
+
+        .auth-form {
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+
+        .auth-title {
+            font-family: 'Outfit', sans-serif;
+            font-size: 1.6rem;
+            font-weight: 700;
+            color: #ffffff;
+            text-align: center;
+            letter-spacing: -0.5px;
+        }
+
+        .auth-subtitle {
+            font-size: 0.85rem;
+            color: #7d859a;
+            text-align: center;
+            margin-bottom: 12px;
+            line-height: 1.4;
+        }
+
+        .form-group {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .form-group label {
+            font-family: 'Fira Code', monospace;
+            font-size: 0.76rem;
+            font-weight: 500;
+            color: #7d859a;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .input-wrapper {
+            position: relative;
+        }
+
+        /* Cyber Bracket inputs */
+        .input-wrapper input {
+            width: 100%;
+            background: rgba(0, 0, 0, 0.4);
+            border: 1px solid rgba(255, 255, 255, 0.06);
+            padding: 14px 16px;
+            border-radius: 4px;
+            color: #ffffff;
+            font-size: 0.95rem;
+            transition: all var(--transition-normal);
+            font-family: 'Fira Code', monospace;
+        }
+
+        .input-wrapper input:focus {
+            outline: none;
+            border-color: #00f0ff;
+            box-shadow: 0 0 12px rgba(0, 240, 255, 0.2);
+            background: rgba(0, 0, 0, 0.6);
+        }
+
+        .password-toggle {
+            background: transparent;
+            border: none;
+            color: #7d859a;
+            position: absolute;
+            right: 16px;
+            top: 50%;
+            transform: translateY(-50%);
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .password-toggle:hover {
+            color: #00f0ff;
+        }
+
+        /* Glowing Cyber Submit Button */
+        .btn-submit-glowing {
+            background: #00f0ff !important;
+            color: #08090e !important;
+            padding: 14px !important;
+            border-radius: 4px;
+            font-family: 'Fira Code', monospace;
+            font-weight: 600;
+            font-size: 0.95rem;
+            border: 1px solid rgba(255,255,255,0.1) !important;
+            box-shadow: 0 0 15px rgba(0, 240, 255, 0.35);
+            transition: all var(--transition-normal) !important;
+            cursor: pointer;
+            margin-top: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .btn-submit-glowing:hover {
+            background: #ffffff !important;
+            box-shadow: 0 0 25px rgba(255, 255, 255, 0.5);
+            transform: translateY(-1px);
+        }
+
+        .auth-footer-info {
+            margin-top: 30px;
+            font-size: 0.78rem;
+            color: #4b5263;
+            text-align: center;
+            border-top: 1px solid rgba(255, 255, 255, 0.04);
+            padding-top: 20px;
+            font-family: 'Fira Code', monospace;
+        }
+
+        .auth-footer-info span {
+            color: #00f0ff;
+        }
+
+        /* Active Connection Badge */
+        .landing-status {
+            align-self: flex-start;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            background: rgba(0, 240, 255, 0.05);
+            border: 1px solid rgba(0, 240, 255, 0.15);
+            color: #80f3ff;
+            padding: 6px 14px;
+            border-radius: 4px;
+            font-size: 0.75rem;
+            font-family: 'Fira Code', monospace;
+            font-weight: 500;
+        }
+
+        .pulse-dot-cyan {
+            width: 8px;
+            height: 8px;
+            background: #00f0ff;
+            border-radius: 50%;
+            box-shadow: 0 0 8px #00f0ff;
+            animation: pulse-dot-cyan 2s infinite;
+        }
+
+        @keyframes pulse-dot-cyan {
+            0% { box-shadow: 0 0 0 0 rgba(0, 240, 255, 0.6); }
+            70% { box-shadow: 0 0 0 8px rgba(0, 240, 255, 0); }
+            100% { box-shadow: 0 0 0 0 rgba(0, 240, 255, 0); }
+        }
+
+        /* Drifting Ambient Background Glows */
+        @keyframes driftGlow1 {
+            0% { transform: translate(0, 0) scale(1); }
+            100% { transform: translate(60px, -50px) scale(1.1); }
+        }
+
+        @keyframes driftGlow2 {
+            0% { transform: translate(0, 0) scale(1); }
+            100% { transform: translate(-80px, 50px) scale(0.9); }
+        }
+
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(16px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .animate-fade-in-up {
+            opacity: 0;
+            animation: fadeInUp 0.7s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+        }
+
+        .delay-1 { animation-delay: 0.05s; }
+        .delay-2 { animation-delay: 0.12s; }
+        .delay-3 { animation-delay: 0.2s; }
+        .delay-4 { animation-delay: 0.28s; }
+    </style>
+</head>
+<body class="auth-page">
+    <!-- Background Ambient Glows -->
+    <div class="tech-glow-cyan"></div>
+    <div class="tech-glow-purple"></div>
+
+    <div class="landing-wrapper">
+        <!-- Left Showcase Panel (About Section Panel) -->
+        <div class="about-section-panel animate-fade-in-up delay-1">
+            <!-- Cyberpunk Corner Brackets -->
+            <div class="cyber-corner top-left"></div>
+            <div class="cyber-corner top-right"></div>
+            <div class="cyber-corner bottom-left"></div>
+            <div class="cyber-corner bottom-right"></div>
+
+            <div class="about-header">
+                <span class="about-system-tag">SYSTEM_INFO</span>
+                <h2 class="about-title">ChevronNexus Home</h2>
+                <p class="about-subtitle">Offline high-performance local share and streaming portal.</p>
+            </div>
+
+            <div class="about-specs-grid">
+                <div class="spec-node">
+                    <span class="spec-icon">⚡</span>
+                    <div class="spec-content">
+                        <h5>Wi-Fi Gigabit Sharing</h5>
+                        <p>Transfer photos and high-resolution video files at direct local network speeds, bypassing cellular data limits.</p>
+                    </div>
+                </div>
+
+                <div class="spec-node">
+                    <span class="spec-icon">🔒</span>
+                    <div class="spec-content">
+                        <h5>Data Privacy & SQL Security</h5>
+                        <p>Credentials and sessions are managed in an offline SQLite database. Files stay physically on your device.</p>
+                    </div>
+                </div>
+
+                <div class="spec-node">
+                    <span class="spec-icon">🎥</span>
+                    <div class="spec-content">
+                        <h5>Home Theater & Film Center</h5>
+                        <p>Upload, download, search, and stream movie archives with dynamic playback speeds and custom HDR filters.</p>
+                    </div>
+                </div>
+
+                <div class="spec-node">
+                    <span class="spec-icon">💻</span>
+                    <div class="spec-content">
+                        <h5>Device File Sandboxes</h5>
+                        <p>Individual folders segment files per device node. Uploads from Device A will never overlap with Device B.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Right Form Column (High-tech Auth Card) -->
+        <div class="auth-card-wrapper animate-fade-in-up delay-2">
+            <!-- Auth Card -->
+            <div class="auth-card glass">
+                <!-- Cyberpunk Corner Brackets -->
+                <div class="cyber-corner top-left"></div>
+                <div class="cyber-corner top-right"></div>
+                <div class="cyber-corner bottom-left"></div>
+                <div class="cyber-corner bottom-right"></div>
+
+                <!-- Active status banner -->
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px;">
+                    <div class="landing-status">
+                        <span class="pulse-dot-cyan"></span>
+                        <span>ONLINE</span>
+                    </div>
+                    <img src="/static/logo.jpg" alt="ChevronNexus" style="width: 34px; height: 34px; object-fit: cover; border-radius: 6px; border: 1px solid rgba(0, 240, 255, 0.35); box-shadow: 0 0 10px rgba(0,240,255,0.25);">
+                </div>
+
+                <div class="auth-tabs">
+                    <button class="auth-tab-btn active" id="login-tab">SYS_LOGIN</button>
+                    <button class="auth-tab-btn" id="register-tab">SYS_REGISTER</button>
+                </div>
+
+                <form class="auth-form" id="auth-form">
+                    <h3 class="auth-title" id="auth-title">Welcome Back</h3>
+                    <p class="auth-subtitle" id="auth-subtitle">Log in to upload and view media files.</p>
+                    
+                    <!-- Inputs -->
+                    <div class="form-group">
+                        <label for="username">Username</label>
+                        <div class="input-wrapper">
+                            <input type="text" id="username" required autocomplete="username" placeholder="e.g. admin">
+                        </div>
+                    </div>
+
+                    <!-- Full Name (Register only) -->
+                    <div class="form-group hidden" id="fullname-group">
+                        <label for="fullname">Full Name</label>
+                        <div class="input-wrapper">
+                            <input type="text" id="fullname" autocomplete="name" placeholder="e.g. John Doe">
+                        </div>
+                    </div>
+
+                    <!-- Device Name (Register only) -->
+                    <div class="form-group hidden" id="devicename-group">
+                        <label for="devicename">Device Name</label>
+                        <div class="input-wrapper">
+                            <input type="text" id="devicename" autocomplete="off" placeholder="e.g. My Phone">
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="password">Security Key</label>
+                        <div class="input-wrapper">
+                            <input type="password" id="password" required autocomplete="current-password" placeholder="••••••••">
+                            <button type="button" class="password-toggle" id="password-toggle" aria-label="Toggle Password Visibility">
+                                <!-- Eye Icon -->
+                                <svg viewBox="0 0 24 24" class="icon-sm eye-open" fill="none" stroke="currentColor" stroke-width="2">
+                                    <path stroke-linecap="round" stroke-linejoin="round" d="M2.036 12.322a1.012 1.012 0 010-.639C3.423 7.51 7.36 4.5 12 4.5c4.638 0 8.573 3.007 9.963 7.178.07.207.07.43 0 .639C20.577 16.49 16.64 19.5 12 19.5c-4.638 0-8.573-3.007-9.963-7.178z" />
+                                    <path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                                </svg>
+                                <!-- Eye Closed Icon -->
+                                <svg viewBox="0 0 24 24" class="icon-sm eye-closed hidden" fill="none" stroke="currentColor" stroke-width="2">
+                                    <path stroke-linecap="round" stroke-linejoin="round" d="M3.98 8.223A10.477 10.477 0 001.934 12C3.226 16.338 7.244 19.5 12 19.5c.993 0 1.953-.138 2.863-.395M6.228 6.228A10.45 10.45 0 0112 4.5c4.756 0 8.773 3.162 10.065 7.498a10.523 10.523 0 01-4.293 5.774M6.228 6.228L3 3m3.228 3.228l3.65 3.65m7.894 7.894L21 21m-2.228-2.228l-3.65-3.65m0 0a3 3 0 10-4.243-4.243m4.242 4.242L9.88 9.88" />
+                                </svg>
+                                <!-- Eye Closed Icon -->
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Action Button -->
+                    <button type="submit" class="btn btn-submit-glowing" id="submit-btn">
+                        <span>CONNECT</span>
+                    </button>
+                </form>
+
+                <div class="auth-footer-info">
+                    TUNNEL_IP: <span id="client-ip-display">...</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- TOAST NOTIFICATION CONTAINER -->
+    <div class="toast-container" id="toast-container"></div>
+
+    <!-- Cursor follow particles -->
+    <div class="custom-cursor" id="custom-cursor"></div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            var mode = 'login'; // 'login' | 'register'
+            var form = document.getElementById('auth-form');
+            var submitBtn = document.getElementById('submit-btn');
+            var loginTab = document.getElementById('login-tab');
+            var registerTab = document.getElementById('register-tab');
+            var usernameInput = document.getElementById('username');
+            var passwordInput = document.getElementById('password');
+            var passwordToggle = document.getElementById('password-toggle');
+            var eyeOpen = passwordToggle.querySelector('.eye-open');
+            var eyeClosed = passwordToggle.querySelector('.eye-closed');
+            var ipDisplay = document.getElementById('client-ip-display');
+            var authTitle = document.getElementById('auth-title');
+            var authSubtitle = document.getElementById('auth-subtitle');
+ 
+            // Detect Client IP
+            fetch('/api/ips')
+                .then(function(res) { return res.json(); })
+                .then(function(data) {
+                    ipDisplay.textContent = window.location.hostname;
+                })
+                .catch(function() {
+                    ipDisplay.textContent = 'Local Network';
+                });
+
+            // Toggle Mode Tabs
+            loginTab.addEventListener('click', function() { setMode('login'); });
+            registerTab.addEventListener('click', function() { setMode('register'); });
+
+            function setMode(newMode) {
+                mode = newMode;
+                var fullnameGroup = document.getElementById('fullname-group');
+                var devicenameGroup = document.getElementById('devicename-group');
+                var fullnameInput = document.getElementById('fullname');
+                var devicenameInput = document.getElementById('devicename');
+
+                if (mode === 'login') {
+                    loginTab.classList.add('active');
+                    registerTab.classList.remove('active');
+                    authTitle.textContent = 'Welcome Back';
+                    authSubtitle.textContent = 'Log in to upload and view media files.';
+                    submitBtn.querySelector('span').textContent = 'CONNECT';
+                    passwordInput.autocomplete = 'current-password';
+                    fullnameGroup.classList.add('hidden');
+                    devicenameGroup.classList.add('hidden');
+                    fullnameInput.required = false;
+                    devicenameInput.required = false;
+                } else {
+                    registerTab.classList.add('active');
+                    loginTab.classList.remove('active');
+                    authTitle.textContent = 'Create Account';
+                    authSubtitle.textContent = 'Register name and device to join ChevronNexus.';
+                    submitBtn.querySelector('span').textContent = 'CREATE_SYS_ACCOUNT';
+                    passwordInput.autocomplete = 'new-password';
+                    fullnameGroup.classList.remove('hidden');
+                    devicenameGroup.classList.remove('hidden');
+                    fullnameInput.required = true;
+                    devicenameInput.required = true;
+                }
+            }
+
+            // Password Toggle
+            passwordToggle.addEventListener('click', function() {
+                if (passwordInput.type === 'password') {
+                    passwordInput.type = 'text';
+                    eyeOpen.classList.add('hidden');
+                    eyeClosed.classList.remove('hidden');
+                } else {
+                    passwordInput.type = 'password';
+                    eyeOpen.classList.remove('hidden');
+                    eyeClosed.classList.add('hidden');
+                }
+            });
+
+            // Form Submit
+            form.addEventListener('submit', function(e) {
+                e.preventDefault();
+                var username = usernameInput.value.trim();
+                var password = passwordInput.value.trim();
+                var name = document.getElementById('fullname').value.trim();
+                var device_name = document.getElementById('devicename').value.trim();
+
+                if (username.length < 3 || username.length > 15) {
+                    showToast("Username must be 3-15 characters.", "error");
+                    return;
+                }
+                if (password.length < 4) {
+                    showToast("Password must be at least 4 characters.", "error");
+                    return;
+                }
+                if (mode === 'register') {
+                    if (!name) {
+                        showToast("Please enter your Full Name.", "error");
+                        return;
+                    }
+                    if (!device_name) {
+                        showToast("Please enter your Device Name.", "error");
+                        return;
+                    }
+                }
+
+                submitBtn.disabled = true;
+                submitBtn.classList.add('loading');
+                var originalText = submitBtn.querySelector('span').textContent;
+                submitBtn.querySelector('span').textContent = 'Processing...';
+
+                var endpoint = mode === 'login' ? '/api/auth/login' : '/api/auth/register';
+                var payload = { username: username, password: password };
+                if (mode === 'register') {
+                    payload.name = name;
+                    payload.device_name = device_name;
+                }
+
+                fetch(endpoint, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                })
+                .then(function(res) {
+                    return res.json().then(function(data) {
+                        if (!res.ok) {
+                            throw new Error(data.error || 'Authentication failed.');
+                        }
+                        return data;
+                    });
+                })
+                .then(function(data) {
+                    showToast("Logged in successfully! Redirecting...", "success");
+                    setTimeout(function() {
+                        window.location.reload();
+                    }, 1000);
+                })
+                .catch(function(err) {
+                    showToast(err.message, "error");
+                    submitBtn.disabled = false;
+                    submitBtn.classList.remove('loading');
+                    submitBtn.querySelector('span').textContent = originalText;
+                });
+            });
+
+            // Toast helper
+            function showToast(message, type) {
+                if (!type) type = 'info';
+                var container = document.getElementById('toast-container');
+                var toast = document.createElement('div');
+                toast.className = 'toast ' + type;
+                
+                var iconHTML = '';
+                if (type === 'success') {
+                    iconHTML = '<svg viewBox="0 0 24 24" style="width:20px;height:20px;color:hsl(150,80%,55%)" fill="none" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>';
+                } else if (type === 'error') {
+                    iconHTML = '<svg viewBox="0 0 24 24" style="width:20px;height:20px;color:hsl(355,85%,68%)" fill="none" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M12 9v3.75m9-.75a9 9 0 11-18 0 9 9 0 0118 0zm-9 3.75h.008v.008H12v-.008z" /></svg>';
+                }
+                
+                toast.innerHTML = iconHTML + '<span>' + message + '</span>';
+                container.appendChild(toast);
+                
+                setTimeout(function() {
+                    toast.style.transition = 'opacity 0.5s ease, transform 0.5s ease';
+                    toast.style.opacity = '0';
+                    toast.style.transform = 'translateY(-10px)';
+                    setTimeout(function() { toast.remove(); }, 500);
+                }, 4000);
+            }
+
+            // Smooth mouse follow cursor script
+            var cursor = document.getElementById('custom-cursor');
+            var mouseX = -100;
+            var mouseY = -100;
+            var cursorX = -100;
+            var cursorY = -100;
+            var currentScale = 1;
+            var targetScale = 1;
+            var isRunning = false;
+            var initialized = false;
+
+            document.addEventListener('mousemove', function(e) {
+                mouseX = e.clientX;
+                mouseY = e.clientY;
+                cursor.style.opacity = '1';
+                
+                if (!initialized) {
+                    cursorX = mouseX;
+                    cursorY = mouseY;
+                    cursor.style.transform = 'translate3d(' + cursorX + 'px, ' + cursorY + 'px, 0) scale(' + currentScale + ')';
+                    initialized = true;
+                }
+
+                if (!isRunning) {
+                    isRunning = true;
+                    lastTime = performance.now();
+                    requestAnimationFrame(tick);
+                }
+            });
+
+            document.addEventListener('mouseleave', function() {
+                cursor.style.opacity = '0';
+                initialized = false;
+            });
+
+            var lastTime = performance.now();
+            function tick(now) {
+                if (!initialized) {
+                    isRunning = false;
+                    return;
+                }
+
+                var dt = Math.min(3, (now - lastTime) / 8.333); // Normalized to 120Hz frame time (8.333ms)
+                lastTime = now;
+                
+                var dx = mouseX - cursorX;
+                var dy = mouseY - cursorY;
+                var ds = targetScale - currentScale;
+                
+                // Stop the RAF loop if we're close enough to the target coordinates and scale
+                if (Math.abs(dx) < 0.1 && Math.abs(dy) < 0.1 && Math.abs(ds) < 0.01) {
+                    cursorX = mouseX;
+                    cursorY = mouseY;
+                    currentScale = targetScale;
+                    cursor.style.transform = 'translate3d(' + cursorX + 'px, ' + cursorY + 'px, 0) scale(' + currentScale + ')';
+                    isRunning = false;
+                    return;
+                }
+                
+                var speed = 0.15;
+                var factor = 1 - Math.pow(1 - speed, dt);
+                
+                cursorX += dx * factor;
+                cursorY += dy * factor;
+                currentScale += ds * factor;
+                
+                cursor.style.transform = 'translate3d(' + cursorX + 'px, ' + cursorY + 'px, 0) scale(' + currentScale + ')';
+                
+                requestAnimationFrame(tick);
+            }
+
+            // Sizing on link/button interactions using event delegation
+            document.addEventListener('mouseover', function(e) {
+                var target = e.target.closest('a, button, input, select, .auth-tab-btn');
+                if (target) {
+                    targetScale = 1.6;
+                    cursor.classList.add('hovering');
+                    if (!isRunning) {
+                        isRunning = true;
+                        lastTime = performance.now();
+                        requestAnimationFrame(tick);
+                    }
+                }
+            });
+
+            document.addEventListener('mouseout', function(e) {
+                var target = e.target.closest('a, button, input, select, .auth-tab-btn');
+                if (target) {
+                    targetScale = 1;
+                    cursor.classList.remove('hovering');
+                    if (!isRunning) {
+                        isRunning = true;
+                        lastTime = performance.now();
+                        requestAnimationFrame(tick);
+                    }
+                }
+            });
+        });
+    </script>
+</body>
+</html>

@@ -1,0 +1,1946 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{ movie_title }} - ChevronNexus Player</title>
+    <link rel="stylesheet" href="/static/css/style.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Outfit:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        /* ================================================================
+           CHEVRONNEXUS CINEMA PLAYER — REBUILT FROM SCRATCH
+           Premium dark theater experience with hardware-accelerated UI
+           ================================================================ */
+        
+        *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+        html, body {
+            background: #000;
+            margin: 0; padding: 0;
+            width: 100vw; height: 100vh;
+            overflow: hidden;
+            user-select: none;
+            -webkit-user-select: none;
+            font-family: 'Outfit', 'Inter', system-ui, -apple-system, sans-serif;
+            color: #fff;
+        }
+
+        /* ── Main Container ── */
+        .cn-player {
+            position: relative;
+            width: 100%; height: 100%;
+            background: #000;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        /* ── Pseudo Fullscreen Fallback ── */
+        .cn-player.cn-pseudo-fullscreen {
+            position: fixed !important;
+            inset: 0 !important;
+            z-index: 9999999 !important;
+            width: 100vw !important;
+            height: 100vh !important;
+            background: #000 !important;
+        }
+
+        /* ── Video Element ── */
+        .cn-video {
+            width: 100%; height: 100%;
+            object-fit: contain;
+            outline: none;
+            background: #000;
+            transition: filter 0.35s ease;
+        }
+        .cn-video.hdr-active {
+            filter: contrast(1.08) saturate(1.22) brightness(1.03);
+        }
+
+        /* ── Controls Overlay ── */
+        .cn-overlay {
+            position: absolute;
+            inset: 0;
+            z-index: 10;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            background: linear-gradient(
+                180deg,
+                rgba(0,0,0,0.72) 0%,
+                transparent 18%,
+                transparent 78%,
+                rgba(0,0,0,0.88) 100%
+            );
+            opacity: 1;
+            transition: opacity 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+            pointer-events: auto;
+        }
+
+        /* Idle state: hide controls + cursor */
+        .cn-player.is-idle { cursor: none; }
+        .cn-player.is-idle .cn-overlay {
+            opacity: 0;
+            pointer-events: none;
+        }
+
+        /* ── Top Bar ── */
+        .cn-topbar {
+            padding: 22px 36px;
+            display: flex;
+            align-items: center;
+            gap: 20px;
+            pointer-events: auto;
+        }
+
+        .cn-btn-back {
+            background: none; border: none;
+            color: #fff;
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            gap: 10px;
+            text-decoration: none;
+            font-size: 1.05rem;
+            font-weight: 500;
+            font-family: inherit;
+            transition: color 0.2s, transform 0.2s;
+        }
+        .cn-btn-back:hover { color: #ecc065; transform: translateX(-3px); }
+        .cn-btn-back svg { width: 26px; height: 26px; }
+
+        .cn-movie-title {
+            font-size: 1.2rem;
+            font-weight: 600;
+            color: #f5f5f7;
+            letter-spacing: -0.3px;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            max-width: 40vw;
+        }
+
+        .cn-badge {
+            padding: 3px 8px;
+            border-radius: 3px;
+            font-size: 0.65rem;
+            font-weight: 800;
+            letter-spacing: 0.6px;
+            text-transform: uppercase;
+            flex-shrink: 0;
+        }
+        .cn-badge-hdr {
+            background: linear-gradient(135deg, #d4af37, #f3e5ab);
+            color: #000;
+            animation: cn-glow 2.5s ease-in-out infinite alternate;
+        }
+        @keyframes cn-glow {
+            0% { box-shadow: 0 0 4px rgba(212,175,55,0.3); }
+            100% { box-shadow: 0 0 14px rgba(212,175,55,0.6); }
+        }
+        .cn-badge-transcode {
+            background: rgba(236, 192, 101, 0.15);
+            border: 1px solid rgba(236, 192, 101, 0.3);
+            color: #ecc065;
+            font-size: 0.72rem;
+            font-weight: 600;
+            padding: 5px 12px;
+            border-radius: 6px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin-left: auto;
+        }
+        .cn-badge-transcode svg { width: 15px; height: 15px; flex-shrink: 0; color: #ecc065; }
+
+        .cn-remote-badge {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 6px 12px;
+            border-radius: 6px;
+            background: rgba(255,255,255,0.04);
+            border: 1px solid rgba(255,255,255,0.08);
+            cursor: pointer;
+            transition: border-color 0.2s, background 0.2s;
+            margin-left: auto;
+        }
+        .cn-remote-badge:hover {
+            border-color: rgba(212,175,55,0.5);
+            background: rgba(255,255,255,0.06);
+        }
+        .cn-remote-badge .cn-badge {
+            background: linear-gradient(135deg, #d4af37, #f3e5ab);
+            color: #000;
+        }
+        .cn-remote-code {
+            font-size: 0.78rem;
+            font-weight: 700;
+            color: #ecc065;
+        }
+
+        /* ── Center Controls (Play/Pause/Skip) ── */
+        .cn-center {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 56px;
+            flex-grow: 1;
+            pointer-events: none;
+        }
+
+        .cn-center-btn {
+            background: rgba(0,0,0,0.5);
+            border: 1px solid rgba(255,255,255,0.15);
+            color: #fff;
+            cursor: pointer;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            pointer-events: auto;
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+            transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        .cn-center-btn:hover {
+            background: rgba(236, 192, 101, 0.85);
+            border-color: #ecc065;
+            transform: scale(1.12);
+        }
+        .cn-center-btn:active { transform: scale(0.95); }
+
+        .cn-center-btn--play {
+            width: 80px; height: 80px;
+        }
+        .cn-center-btn--play svg { width: 36px; height: 36px; }
+
+        .cn-center-btn--skip {
+            width: 52px; height: 52px;
+            color: rgba(255,255,255,0.8);
+        }
+        .cn-center-btn--skip:hover { color: #fff; }
+        .cn-center-btn--skip svg { width: 22px; height: 22px; }
+
+        /* ── Center Status Indicator (spacebar flash) ── */
+        .cn-indicator {
+            position: absolute;
+            width: 88px; height: 88px;
+            background: rgba(0,0,0,0.6);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 50;
+            pointer-events: none;
+            opacity: 0;
+            transform: scale(0.8);
+        }
+        .cn-indicator.flash {
+            animation: cn-ping 0.55s ease-out;
+        }
+        @keyframes cn-ping {
+            0%   { opacity: 0; transform: scale(0.7); }
+            25%  { opacity: 1; transform: scale(1.12); }
+            75%  { opacity: 1; transform: scale(1.0); }
+            100% { opacity: 0; transform: scale(1.15); }
+        }
+        .cn-indicator svg { width: 38px; height: 38px; color: #fff; }
+
+        /* ── Bottom Panel ── */
+        .cn-bottom {
+            padding: 18px 36px 28px;
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+            pointer-events: auto;
+        }
+
+        /* ── Timeline Scrubber ── */
+        .cn-timeline {
+            width: 100%;
+            height: 10px;
+            display: flex;
+            align-items: center;
+            cursor: pointer;
+            position: relative;
+        }
+
+        .cn-timeline-track {
+            width: 100%; height: 4px;
+            background: rgba(255,255,255,0.18);
+            border-radius: 2px;
+            position: relative;
+            transition: height 0.12s;
+        }
+        .cn-timeline:hover .cn-timeline-track { height: 6px; }
+
+        .cn-timeline-buffer {
+            position: absolute;
+            inset: 0; right: auto;
+            width: 0%;
+            background: rgba(255,255,255,0.12);
+            border-radius: 2px;
+        }
+        .cn-timeline-progress {
+            position: absolute;
+            inset: 0; right: auto;
+            width: 0%;
+            background: #ecc065;
+            border-radius: 2px;
+        }
+        .cn-timeline-handle {
+            position: absolute;
+            top: 50%;
+            transform: translate(-50%, -50%) scale(0);
+            width: 16px; height: 16px;
+            background: #ecc065;
+            border-radius: 50%;
+            transition: transform 0.12s;
+            box-shadow: 0 0 10px rgba(236,192,101,0.5);
+            z-index: 5;
+        }
+        .cn-timeline:hover .cn-timeline-handle {
+            transform: translate(-50%, -50%) scale(1);
+        }
+
+        /* ── Controls Row ── */
+        .cn-controls-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .cn-group {
+            display: flex;
+            align-items: center;
+            gap: 24px;
+        }
+
+        .cn-ctrl {
+            background: none; border: none;
+            color: rgba(255,255,255,0.85);
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-family: inherit;
+            transition: color 0.15s, transform 0.15s;
+        }
+        .cn-ctrl:hover { color: #fff; transform: scale(1.08); }
+        .cn-ctrl svg { width: 24px; height: 24px; }
+
+        /* ── Volume Slider ── */
+        .cn-volume-wrap {
+            display: flex;
+            align-items: center;
+            gap: 0;
+        }
+        .cn-volume-track {
+            width: 0; overflow: hidden;
+            transition: width 0.25s cubic-bezier(0.4,0,0.2,1);
+            display: flex;
+            align-items: center;
+        }
+        .cn-volume-wrap:hover .cn-volume-track { width: 90px; margin-left: 8px; }
+
+        .cn-volume-range {
+            width: 80px; height: 4px;
+            cursor: pointer;
+            appearance: none; -webkit-appearance: none;
+            background: rgba(255,255,255,0.25);
+            outline: none;
+            border-radius: 2px;
+        }
+        .cn-volume-range::-webkit-slider-thumb {
+            appearance: none; -webkit-appearance: none;
+            width: 12px; height: 12px;
+            border-radius: 50%;
+            background: #ecc065;
+            cursor: pointer;
+        }
+
+        /* ── Time Display ── */
+        .cn-time {
+            font-size: 0.88rem;
+            font-weight: 500;
+            color: rgba(255,255,255,0.78);
+            font-family: 'JetBrains Mono', 'Fira Code', monospace;
+            font-variant-numeric: tabular-nums;
+        }
+
+        /* ── Speed Select ── */
+        .cn-speed {
+            background: rgba(255,255,255,0.08);
+            border: 1px solid rgba(255,255,255,0.15);
+            color: #fff;
+            border-radius: 4px;
+            padding: 4px 8px;
+            font-size: 0.8rem;
+            font-weight: 600;
+            font-family: inherit;
+            outline: none;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        .cn-speed:hover { border-color: #ecc065; background: rgba(236,192,101,0.1); }
+        .cn-speed option { background: #111; }
+
+        /* ── Dolby Toggle ── */
+        .cn-dolby-box {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            background: rgba(0, 120, 215, 0.06);
+            border: 1px solid rgba(0, 120, 215, 0.15);
+            padding: 6px 12px;
+            border-radius: 6px;
+            transition: all 0.3s ease;
+        }
+        .cn-dolby-box.active {
+            background: rgba(0, 120, 215, 0.12);
+            border-color: rgba(0, 120, 215, 0.4);
+            box-shadow: 0 0 12px rgba(0, 120, 215, 0.15);
+        }
+        .cn-dolby-label {
+            font-size: 0.75rem;
+            font-weight: 700;
+            color: #7eb8e5;
+            letter-spacing: 0.2px;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+        }
+        .cn-badge-dolby {
+            background: linear-gradient(135deg, #0078d7 0%, #00b4d8 50%, #0078d7 100%);
+            background-size: 200% 100%;
+            color: #fff;
+            font-size: 0.58rem;
+            font-weight: 800;
+            padding: 2px 6px;
+            border-radius: 3px;
+            letter-spacing: 0.8px;
+            text-transform: uppercase;
+            animation: cn-dolby-shift 3s ease-in-out infinite;
+        }
+        @keyframes cn-dolby-shift {
+            0%, 100% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+        }
+        .cn-dolby-box .cn-switch input:checked + .cn-switch-slider {
+            background: rgba(0, 120, 215, 0.35);
+            border-color: #0078d7;
+        }
+        .cn-dolby-box .cn-switch input:checked + .cn-switch-slider::before {
+            background: #0078d7;
+            box-shadow: 0 0 8px rgba(0, 120, 215, 0.6);
+        }
+
+        /* ── HDR Toggle ── */
+        .cn-hdr-box {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            background: rgba(255,255,255,0.04);
+            border: 1px solid rgba(255,255,255,0.08);
+            padding: 6px 12px;
+            border-radius: 6px;
+        }
+        .cn-hdr-label {
+            font-size: 0.75rem;
+            font-weight: 700;
+            color: #e5c158;
+            letter-spacing: 0.2px;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+        }
+        .cn-hdr-label .cn-badge { font-size: 0.6rem; }
+
+        .cn-switch {
+            position: relative;
+            display: inline-block;
+            width: 36px; height: 20px;
+        }
+        .cn-switch input { opacity: 0; width: 0; height: 0; }
+        .cn-switch-slider {
+            position: absolute; inset: 0;
+            background: rgba(255,255,255,0.15);
+            border-radius: 20px;
+            border: 1px solid rgba(255,255,255,0.1);
+            cursor: pointer;
+            transition: 0.3s;
+        }
+        .cn-switch-slider::before {
+            content: "";
+            position: absolute;
+            width: 12px; height: 12px;
+            left: 3px; bottom: 3px;
+            background: #9ca3af;
+            border-radius: 50%;
+            transition: 0.3s;
+        }
+        .cn-switch input:checked + .cn-switch-slider {
+            background: rgba(236, 192, 101, 0.3);
+            border-color: #ecc065;
+        }
+        .cn-switch input:checked + .cn-switch-slider::before {
+            transform: translateX(16px);
+            background: #ecc065;
+            box-shadow: 0 0 6px rgba(236, 192, 101, 0.5);
+        }
+
+        /* ── Audio & Subtitles Popover ── */
+        .cn-audiosub-wrap { position: relative; display: inline-block; }
+
+        .cn-popover {
+            position: absolute;
+            bottom: calc(100% + 14px);
+            right: 0;
+            width: 280px;
+            background: rgba(10,10,10,0.94);
+            border: 1px solid rgba(255,255,255,0.12);
+            border-radius: 12px;
+            padding: 16px;
+            box-shadow: 0 12px 40px rgba(0,0,0,0.7);
+            backdrop-filter: blur(18px);
+            -webkit-backdrop-filter: blur(18px);
+            display: none;
+            flex-direction: column;
+            gap: 14px;
+            z-index: 100;
+        }
+        .cn-popover.open { display: flex; }
+
+        .cn-pop-section { display: flex; flex-direction: column; gap: 8px; }
+        .cn-pop-section h4 {
+            margin: 0;
+            font-size: 0.78rem; font-weight: 700;
+            color: #777;
+            text-transform: uppercase;
+            letter-spacing: 0.8px;
+        }
+
+        .cn-pop-list {
+            display: flex;
+            flex-direction: column;
+            gap: 3px;
+            max-height: 130px;
+            overflow-y: auto;
+        }
+
+        .cn-pop-item {
+            background: none; border: none;
+            color: #ccc;
+            text-align: left;
+            padding: 7px 10px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 0.86rem;
+            font-family: inherit;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            transition: all 0.12s;
+            width: 100%;
+        }
+        .cn-pop-item:hover { background: rgba(255,255,255,0.08); color: #fff; }
+        .cn-pop-item.active {
+            background: rgba(236, 192, 101, 0.15);
+            color: #ecc065;
+            font-weight: 600;
+        }
+        .cn-pop-item.active::after { content: "✓"; font-weight: 800; }
+
+        .cn-pop-divider { height: 1px; background: rgba(255,255,255,0.08); margin: 2px 0; }
+
+        .cn-pop-note {
+            font-size: 0.72rem;
+            color: #999;
+            line-height: 1.4;
+            margin-top: 4px;
+        }
+
+        .cn-btn-sub-upload {
+            border: 1px dashed rgba(255,255,255,0.2);
+            background: rgba(255,255,255,0.03);
+            color: #ddd;
+            border-radius: 6px;
+            padding: 8px;
+            text-align: center;
+            font-size: 0.78rem;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 6px;
+            transition: all 0.2s;
+            width: 100%;
+            font-family: inherit;
+        }
+        .cn-btn-sub-upload:hover {
+            border-color: #ecc065;
+            background: rgba(236, 192, 101, 0.06);
+            color: #fff;
+        }
+        .cn-btn-sub-upload svg { width: 16px; height: 16px; }
+
+        /* ── External Player Modal ── */
+        .cn-modal-bg {
+            position: fixed;
+            inset: 0;
+            background: rgba(0,0,0,0.88);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 2000;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.3s;
+        }
+        .cn-modal-bg.open { opacity: 1; pointer-events: auto; }
+
+        .cn-modal {
+            background: #111218;
+            border: 1px solid rgba(255,255,255,0.1);
+            border-radius: 16px;
+            width: 90%; max-width: 500px;
+            padding: 28px;
+            box-shadow: 0 20px 50px rgba(0,0,0,0.9);
+            transform: translateY(20px);
+            transition: transform 0.3s;
+        }
+        .cn-modal-bg.open .cn-modal { transform: translateY(0); }
+
+        .cn-modal-head {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+        .cn-modal-head h3 {
+            margin: 0; font-size: 1.2rem;
+            color: #fff; font-weight: 600;
+        }
+        .cn-modal-close {
+            background: none; border: none;
+            color: #888; font-size: 1.7rem;
+            cursor: pointer; line-height: 1; padding: 0;
+            font-family: inherit;
+            transition: color 0.15s;
+        }
+        .cn-modal-close:hover { color: #fff; }
+
+        .cn-modal-body {
+            color: #ccc; font-size: 0.92rem; line-height: 1.6;
+        }
+        .cn-modal-body p { margin: 0 0 14px; }
+
+        .cn-stream-box {
+            display: flex; gap: 10px; margin: 18px 0;
+        }
+        .cn-stream-box input {
+            flex: 1;
+            background: rgba(255,255,255,0.05);
+            border: 1px solid rgba(255,255,255,0.15);
+            color: #fff;
+            padding: 10px 12px;
+            border-radius: 6px;
+            font-family: monospace;
+            font-size: 0.83rem;
+            outline: none;
+        }
+        .cn-stream-box button {
+            background: #ecc065; color: #0b0d19;
+            border: none; padding: 0 16px;
+            border-radius: 6px; font-weight: 600;
+            cursor: pointer; font-family: inherit;
+            transition: background 0.15s;
+        }
+        .cn-stream-box button:hover { background: #f4d185; }
+
+        .cn-steps {
+            display: flex; flex-direction: column;
+            gap: 10px; margin-top: 14px;
+            background: rgba(255,255,255,0.02);
+            padding: 16px; border-radius: 8px;
+            border: 1px solid rgba(255,255,255,0.05);
+        }
+        .cn-step { display: flex; align-items: flex-start; gap: 12px; }
+        .cn-step-n {
+            background: rgba(236, 192, 101, 0.2); color: #ecc065;
+            width: 22px; height: 22px; border-radius: 50%;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 0.78rem; font-weight: 700; flex-shrink: 0;
+            margin-top: 2px;
+        }
+        .cn-step-t { color: #ddd; }
+        .cn-step-t code {
+            background: rgba(255,255,255,0.1);
+            padding: 2px 5px; border-radius: 4px;
+            font-family: monospace;
+        }
+
+        /* ── Toast Notifications ── */
+        .cn-toast-wrap {
+            position: fixed;
+            top: 20px; right: 20px;
+            z-index: 9999;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            pointer-events: none;
+        }
+        .cn-toast {
+            background: rgba(20,20,28,0.92);
+            border: 1px solid rgba(255,255,255,0.1);
+            color: #eee;
+            padding: 10px 18px;
+            border-radius: 8px;
+            font-size: 0.85rem;
+            font-weight: 500;
+            font-family: inherit;
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            box-shadow: 0 6px 20px rgba(0,0,0,0.5);
+            opacity: 1;
+            transition: opacity 0.5s ease;
+            pointer-events: auto;
+        }
+        .cn-toast.success { border-left: 3px solid #22c55e; }
+        .cn-toast.error   { border-left: 3px solid #ef4444; }
+        .cn-toast.info    { border-left: 3px solid #ecc065; }
+
+        /* ── Subtitle Cue Styling ── */
+        ::cue {
+            background: rgba(10,10,10,0.75) !important;
+            color: #fff !important;
+            font-family: 'Outfit', 'Inter', sans-serif !important;
+            font-size: 1.25rem !important;
+            text-shadow: 0 1px 4px rgba(0,0,0,0.9) !important;
+            border-radius: 4px !important;
+            padding: 3px 8px !important;
+        }
+
+        /* ── Loading Spinner ── */
+        .cn-loading {
+            position: absolute;
+            z-index: 40;
+            pointer-events: none;
+            opacity: 0;
+            transition: opacity 0.3s;
+        }
+        .cn-loading.show { opacity: 1; }
+        .cn-spinner {
+            width: 48px; height: 48px;
+            border: 3px solid rgba(255,255,255,0.15);
+            border-top-color: #ecc065;
+            border-radius: 50%;
+            animation: cn-spin 0.7s linear infinite;
+        }
+        @keyframes cn-spin { to { transform: rotate(360deg); } }
+    </style>
+</head>
+<body>
+    <div class="cn-player" id="cn-player">
+
+        <!-- Video Element -->
+        <video class="cn-video" id="cn-video" playsinline>
+            <source src="/movies/{{ movie_path_encoded }}?start={{ start_time | default('0') }}{% if stream_token %}&token={{ stream_token }}{% endif %}" type="{{ mime_type }}">
+            Your browser does not support HTML5 video.
+        </video>
+
+        <!-- Loading Spinner -->
+        <div class="cn-loading" id="cn-loading">
+            <div class="cn-spinner"></div>
+        </div>
+
+        <!-- Center Status Indicator -->
+        <div class="cn-indicator" id="cn-indicator">
+            <svg viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg>
+        </div>
+
+        <!-- Controls Overlay -->
+        <div class="cn-overlay" id="cn-overlay">
+
+            <!-- Top Bar -->
+            <div class="cn-topbar">
+                <a href="/" class="cn-btn-back" id="cn-back">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M10.5 19.5L3 12m0 0l7.5-7.5M3 12h18"/>
+                    </svg>
+                    <span>Back</span>
+                </a>
+                <span class="cn-movie-title">{{ movie_title }}</span>
+                <span class="cn-badge cn-badge-hdr">HDR10</span>
+
+                {% set ext = movie_path.split('.')[-1].lower() %}
+                {% if ext not in ['mp4', 'webm', 'ogg'] or audio_codec in ['ac3', 'dts', 'truehd', 'eac3', 'mlp'] %}
+                <div class="cn-badge-transcode" id="cn-transcode-notice">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126zM12 15.75h.007v.008H12v-.008z"/>
+                    </svg>
+                    <span>Transcoded for Browser &mdash; <button class="cn-ctrl" id="cn-ext-open" style="color:#fff;text-decoration:underline;font-size:0.8rem;font-weight:700;padding:0;display:inline;">Stream in External Player</button></span>
+                </div>
+                {% endif %}
+
+                <!-- Remote Pairing Badge (inserted by JS) -->
+            </div>
+
+            <!-- Center Controls -->
+            <div class="cn-center">
+                <button class="cn-center-btn cn-center-btn--skip" id="cn-skip-back" title="Rewind 10s">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M15 15l-6-6 6-6"/>
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M9 15l-6-6 6-6"/>
+                    </svg>
+                </button>
+                <button class="cn-center-btn cn-center-btn--play" id="cn-center-play" title="Play / Pause">
+                    <svg viewBox="0 0 24 24" fill="currentColor" id="cn-center-icon">
+                        <path d="M8 5v14l11-7z"/>
+                    </svg>
+                </button>
+                <button class="cn-center-btn cn-center-btn--skip" id="cn-skip-fwd" title="Forward 10s">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M9 5l6 6-6 6"/>
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M15 5l6 6-6 6"/>
+                    </svg>
+                </button>
+            </div>
+
+            <!-- Bottom Panel -->
+            <div class="cn-bottom">
+                <!-- Timeline -->
+                <div class="cn-timeline" id="cn-timeline">
+                    <div class="cn-timeline-track">
+                        <div class="cn-timeline-buffer" id="cn-buffer"></div>
+                        <div class="cn-timeline-progress" id="cn-progress"></div>
+                        <div class="cn-timeline-handle" id="cn-handle"></div>
+                    </div>
+                </div>
+
+                <!-- Controls Row -->
+                <div class="cn-controls-row">
+                    <!-- Left -->
+                    <div class="cn-group">
+                        <button class="cn-ctrl" id="cn-play" title="Play (Space)">
+                            <svg viewBox="0 0 24 24" fill="currentColor" id="cn-play-icon">
+                                <path d="M8 5v14l11-7z"/>
+                            </svg>
+                        </button>
+
+                        <div class="cn-volume-wrap">
+                            <button class="cn-ctrl" id="cn-mute" title="Mute (M)">
+                                <svg viewBox="0 0 24 24" fill="currentColor" id="cn-vol-icon">
+                                    <path d="M3 9v6h4l5 5V4L7 9H3zm13.5 3c0-1.77-1.02-3.29-2.5-4.03v8.05c1.48-.73 2.5-2.25 2.5-4.02zM14 3.23v2.06c2.89.86 5 3.54 5 6.71s-2.11 5.85-5 6.71v2.06c4.01-.91 7-4.49 7-8.77s-2.99-7.86-7-8.77z"/>
+                                </svg>
+                            </button>
+                            <div class="cn-volume-track">
+                                <input type="range" class="cn-volume-range" id="cn-vol" min="0" max="1" step="0.05" value="1">
+                            </div>
+                        </div>
+
+                        <span class="cn-time" id="cn-time">00:00 / 00:00</span>
+                    </div>
+
+                    <!-- Right -->
+                    <div class="cn-group">
+                        <!-- HDR Toggle -->
+                        <div class="cn-hdr-box">
+                            <span class="cn-hdr-label">
+                                <span class="cn-badge cn-badge-hdr">HDR10</span>
+                                HDR Boost
+                            </span>
+                            <label class="cn-switch">
+                                <input type="checkbox" id="cn-hdr" checked>
+                                <span class="cn-switch-slider"></span>
+                            </label>
+                        </div>
+
+                        {% if audio_codec in ['ac3', 'dts', 'truehd', 'eac3', 'mlp'] %}
+                        <!-- Dolby Audio Toggle -->
+                        <div class="cn-dolby-box" id="cn-dolby-box">
+                            <span class="cn-dolby-label">
+                                <span class="cn-badge-dolby">DOLBY</span>
+                                Passthrough
+                            </span>
+                            <label class="cn-switch">
+                                <input type="checkbox" id="cn-dolby">
+                                <span class="cn-switch-slider"></span>
+                            </label>
+                        </div>
+                        {% endif %}
+
+                        <!-- Speed -->
+                        <select class="cn-speed" id="cn-speed" title="Playback Speed">
+                            <option value="0.5">0.5x</option>
+                            <option value="0.75">0.75x</option>
+                            <option value="1" selected>1.0x</option>
+                            <option value="1.25">1.25x</option>
+                            <option value="1.5">1.5x</option>
+                            <option value="2">2.0x</option>
+                        </select>
+
+                        <!-- Audio & Subtitles -->
+                        <div class="cn-audiosub-wrap">
+                            <button class="cn-ctrl" id="cn-audiosub-btn" title="Audio & Subtitles (C)">
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                                    <path stroke-linecap="round" stroke-linejoin="round" d="M7.5 8.25h9m-9 3H12m-9.75 1.51c0 1.6 1.123 2.994 2.707 3.227 1.129.166 2.27.293 3.423.379.35.026.67.21.865.501L12 21l2.755-4.133a1.14 1.14 0 01.865-.501 48.172 48.172 0 003.423-.379c1.584-.233 2.707-1.626 2.707-3.228V6.741c0-1.602-1.123-2.995-2.707-3.228A48.394 48.394 0 0012 3c-2.392 0-4.744.175-7.043.513C3.373 3.746 2.25 5.14 2.25 6.741v5.277z"/>
+                                </svg>
+                            </button>
+
+                            <div class="cn-popover" id="cn-popover">
+                                <div class="cn-pop-section">
+                                    <h4>Audio Tracks</h4>
+                                    <div class="cn-pop-list" id="cn-audio-list">
+                                        {% if audio_tracks and audio_tracks|length > 0 %}
+                                            {% for track in audio_tracks %}
+                                            <button class="cn-pop-item{% if loop.first %} active{% endif %}" data-atrack="{{ track.index }}">{{ track.label }}</button>
+                                            {% endfor %}
+                                        {% else %}
+                                            <button class="cn-pop-item active" data-atrack="0">Track 1 (Default)</button>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                                <div class="cn-pop-divider"></div>
+                                <div class="cn-pop-section">
+                                    <h4>Subtitles</h4>
+                                    <div class="cn-pop-list" id="cn-sub-list">
+                                        <button class="cn-pop-item active" data-idx="-1">Off</button>
+                                    </div>
+                                    <div style="margin-top:6px;">
+                                        <label for="cn-sub-file" class="cn-btn-sub-upload">
+                                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                                <path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5v15m7.5-7.5h-15"/>
+                                            </svg>
+                                            Add Subtitle File (.srt, .vtt)
+                                        </label>
+                                        <input type="file" id="cn-sub-file" accept=".srt,.vtt" style="display:none;">
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Fullscreen -->
+                        <button class="cn-ctrl" id="cn-fs" title="Fullscreen (F)">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" id="cn-fs-icon">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M3.75 3.75v4.5m0-4.5h4.5m-4.5 0L9 9M3.75 20.25v-4.5m0 4.5h4.5m-4.5 0L9 15M20.25 3.75h-4.5m4.5 0v4.5m0-4.5L15 9m5.25 11.25h-4.5m4.5 0v-4.5m0 4.5L15 15"/>
+                            </svg>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- External Player Modal -->
+    <div class="cn-modal-bg" id="cn-ext-modal">
+        <div class="cn-modal">
+            <div class="cn-modal-head">
+                <h3>Stream in External Player</h3>
+                <button class="cn-modal-close" id="cn-ext-close">&times;</button>
+            </div>
+            <div class="cn-modal-body">
+                <p>Web browsers have limited support for high-quality audio formats like <strong>Dolby Digital (AC-3, E-AC-3)</strong> and <strong>DTS</strong>.</p>
+                <p>To enjoy full surround sound, copy the stream URL below and open it in <strong>VLC</strong>, <strong>PotPlayer</strong>, or any media player:</p>
+                <div class="cn-stream-box">
+                    <input type="text" id="cn-stream-url" readonly>
+                    <button id="cn-copy-url">Copy</button>
+                </div>
+                <div class="cn-steps">
+                    <div class="cn-step">
+                        <span class="cn-step-n">1</span>
+                        <span class="cn-step-t">Click <strong>Copy</strong> above.</span>
+                    </div>
+                    <div class="cn-step">
+                        <span class="cn-step-n">2</span>
+                        <span class="cn-step-t">Open <strong>VLC</strong> or your preferred player.</span>
+                    </div>
+                    <div class="cn-step">
+                        <span class="cn-step-n">3</span>
+                        <span class="cn-step-t">Press <strong>Ctrl+N</strong> (or <code>Media</code> &rarr; <code>Open Network Stream</code>).</span>
+                    </div>
+                    <div class="cn-step">
+                        <span class="cn-step-n">4</span>
+                        <span class="cn-step-t">Paste (Ctrl+V) and click <strong>Play</strong>.</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Toast Container -->
+    <div class="cn-toast-wrap" id="cn-toasts"></div>
+
+    <script>
+    /* ==================================================================
+       CHEVRONNEXUS PLAYER ENGINE — REBUILT FROM SCRATCH
+       Clean, modular, null-safe architecture
+       ================================================================== */
+    (function() {
+        'use strict';
+
+        // ── DOM REFERENCES ──
+        var $ = function(id) { return document.getElementById(id); };
+
+        function copyToClipboard(text) {
+            if (navigator.clipboard && navigator.clipboard.writeText) {
+                return navigator.clipboard.writeText(text);
+            } else {
+                return new Promise(function(resolve, reject) {
+                    try {
+                        var textArea = document.createElement("textarea");
+                        textArea.value = text;
+                        textArea.style.top = "0";
+                        textArea.style.left = "0";
+                        textArea.style.position = "fixed";
+                        document.body.appendChild(textArea);
+                        textArea.focus();
+                        textArea.select();
+                        var successful = document.execCommand('copy');
+                        document.body.removeChild(textArea);
+                        if (successful) {
+                            resolve();
+                        } else {
+                            reject(new Error('Copy failed'));
+                        }
+                    } catch (err) {
+                        reject(err);
+                    }
+                });
+            }
+        }
+
+        const video      = $('cn-video');
+        const player     = $('cn-player');
+        const overlay    = $('cn-overlay');
+        const indicator  = $('cn-indicator');
+        const loading    = $('cn-loading');
+
+        // Top bar
+        const btnBack    = $('cn-back');
+
+        // Center controls
+        const centerPlay = $('cn-center-play');
+        const centerIcon = $('cn-center-icon');
+        const skipBack   = $('cn-skip-back');
+        const skipFwd    = $('cn-skip-fwd');
+
+        // Bottom controls
+        const timeline   = $('cn-timeline');
+        const progress   = $('cn-progress');
+        const buffer     = $('cn-buffer');
+        const handle     = $('cn-handle');
+        const btnPlay    = $('cn-play');
+        const playIcon   = $('cn-play-icon');
+        const btnMute    = $('cn-mute');
+        const volIcon    = $('cn-vol-icon');
+        const volSlider  = $('cn-vol');
+        const timeDisp   = $('cn-time');
+        const hdrToggle  = $('cn-hdr');
+        const dolbyToggle = $('cn-dolby');
+        const dolbyBox   = $('cn-dolby-box');
+        const speedSel   = $('cn-speed');
+        const btnFS      = $('cn-fs');
+        const fsIcon     = $('cn-fs-icon');
+
+        // Popover
+        const popBtn     = $('cn-audiosub-btn');
+        const popover    = $('cn-popover');
+        const audioList  = $('cn-audio-list');
+        const subList    = $('cn-sub-list');
+        const subFile    = $('cn-sub-file');
+
+        // External player modal
+        const extModal   = $('cn-ext-modal');
+        const extClose   = $('cn-ext-close');
+        const extOpen    = $('cn-ext-open');
+        const streamUrl  = $('cn-stream-url');
+        const copyUrl    = $('cn-copy-url');
+
+        // Toast container
+        const toasts     = $('cn-toasts');
+
+        // ── STATE ──
+        let isDragging    = false;
+        let controlsTimer = null;
+        let savedVolume   = 1;
+
+        // Transcoding & seeking state from Jinja
+        const isTranscoded = {% if ext not in ['mp4', 'webm', 'ogg'] or audio_codec in ['ac3', 'dts', 'truehd', 'eac3', 'mlp'] %}true{% else %}false{% endif %};
+        const hasDolbyAudio = {% if audio_codec in ['ac3', 'dts', 'truehd', 'eac3', 'mlp'] %}true{% else %}false{% endif %};
+        const audioCodecName = '{{ audio_codec }}';
+        const totalDuration = {{ duration | default(0) }};
+        let startOffset = parseFloat('{{ start_time | default("0") }}');
+        let dolbyMode = false;
+        let currentAudioTrack = 0;
+        var playerName = '';
+        fetch('/api/auth/session')
+            .then(function(r) { return r.json(); })
+            .then(function(d) { playerName = d.name || d.username || ''; })
+            .catch(function() { playerName = ''; });
+
+        // ── SVG PATHS ──
+        const SVG = {
+            play:     '<path d="M8 5v14l11-7z"/>',
+            pause:    '<path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z"/>',
+            volMax:   '<path d="M3 9v6h4l5 5V4L7 9H3zm13.5 3c0-1.77-1.02-3.29-2.5-4.03v8.05c1.48-.73 2.5-2.25 2.5-4.02zM14 3.23v2.06c2.89.86 5 3.54 5 6.71s-2.11 5.85-5 6.71v2.06c4.01-.91 7-4.49 7-8.77s-2.99-7.86-7-8.77z"/>',
+            volLow:   '<path d="M3 9v6h4l5 5V4L7 9H3zm13.5 3c0-1.77-1.02-3.29-2.5-4.03v8.05c1.48-.73 2.5-2.25 2.5-4.02z"/>',
+            volMute:  '<path d="M16.5 12c0-1.77-1.02-3.29-2.5-4.03v2.21l2.45 2.45c.03-.21.05-.42.05-.63zm2.5 0c0 .94-.2 1.82-.54 2.64l1.51 1.51C20.63 14.91 21 13.5 21 12c0-4.28-2.99-7.86-7-8.77v2.06c2.89.86 5 3.54 5 6.71zM4.27 3L3 4.27 7.73 9H3v6h4l5 5v-6.73l4.25 4.25c-.67.52-1.42.93-2.25 1.18v2.06c1.38-.31 2.63-.95 3.69-1.81L19.73 21 21 19.73l-9-9L4.27 3zM12 4L9.91 6.09 12 8.18V4z"/>',
+            ffwd:     '<path d="M4 18l8.5-6L4 6v12zm9-12v12l8.5-6L13 6z"/>',
+            rewind:   '<path d="M20 18l-8.5-6 8.5-6v12zm-9-12v12l-8.5-6L11 6z"/>',
+            fsEnter:  '<path stroke-linecap="round" stroke-linejoin="round" d="M3.75 3.75v4.5m0-4.5h4.5m-4.5 0L9 9M3.75 20.25v-4.5m0 4.5h4.5m-4.5 0L9 15M20.25 3.75h-4.5m4.5 0v4.5m0-4.5L15 9m5.25 11.25h-4.5m4.5 0v-4.5m0 4.5L15 15"/>',
+            fsExit:   '<path stroke-linecap="round" stroke-linejoin="round" d="M9 9V4.5M9 9H4.5M9 9L3 3m12 6V4.5m0 4.5h4.5m-4.5 0l6-6M9 15v4.5M9 15H4.5m4.5 0l-6 6m6-6v4.5m0-4.5h4.5m-4.5 0l6 6"/>'
+        };
+
+        // ── UTILS ──
+        function fmt(s) {
+            if (isNaN(s) || s < 0) return '00:00';
+            const h = Math.floor(s / 3600);
+            const m = Math.floor((s % 3600) / 60);
+            const sec = Math.floor(s % 60);
+            const mm = h > 0 && m < 10 ? '0' + m : '' + m;
+            const ss = sec < 10 ? '0' + sec : '' + sec;
+            return h > 0 ? h + ':' + mm + ':' + ss : mm + ':' + ss;
+        }
+
+        function toast(msg, type) {
+            if (!toasts) return;
+            const el = document.createElement('div');
+            el.className = 'cn-toast ' + (type || 'info');
+            el.textContent = msg;
+            toasts.appendChild(el);
+            setTimeout(function() {
+                el.style.opacity = '0';
+                setTimeout(function() { el.remove(); }, 500);
+            }, 3000);
+        }
+
+        function flash(svgContent) {
+            if (!indicator) return;
+            indicator.querySelector('svg').innerHTML = svgContent;
+            indicator.classList.remove('flash');
+            void indicator.offsetWidth; // reflow
+            indicator.classList.add('flash');
+        }
+
+        // ── HDR BOOST ──
+        function syncHDR() {
+            if (hdrToggle && hdrToggle.checked) {
+                video.classList.add('hdr-active');
+            } else {
+                video.classList.remove('hdr-active');
+            }
+        }
+        syncHDR();
+        if (hdrToggle) hdrToggle.addEventListener('change', syncHDR);
+
+        // ── DOLBY PASSTHROUGH ──
+        function getDolbyCodecLabel() {
+            var labels = {
+                'ac3': 'Dolby Digital (AC-3)',
+                'eac3': 'Dolby Digital Plus (E-AC-3)',
+                'truehd': 'Dolby TrueHD / Atmos',
+                'mlp': 'Dolby TrueHD (MLP)',
+                'dts': 'DTS Surround'
+            };
+            return labels[audioCodecName] || 'Surround Audio';
+        }
+
+        function buildStreamSrc(rawMode) {
+            var base = '/movies/{{ movie_path_encoded }}';
+            var params = [];
+            if (startOffset > 0) params.push('start=' + Math.round(startOffset));
+            {% if stream_token %}params.push('token={{ stream_token }}');{% endif %}
+            if (rawMode) params.push('raw=1');
+            if (currentAudioTrack > 0) params.push('atrack=' + currentAudioTrack);
+            return base + (params.length ? '?' + params.join('&') : '');
+        }
+
+        function toggleDolby() {
+            if (!dolbyToggle) return;
+            dolbyMode = dolbyToggle.checked;
+
+            // Save current playback position
+            var currentPos = isTranscoded ? (video.currentTime + startOffset) : video.currentTime;
+            if (dolbyMode && currentPos > 0) startOffset = currentPos;
+
+            // Update the source
+            var src = video.querySelector('source');
+            if (src) {
+                src.src = buildStreamSrc(dolbyMode);
+            }
+
+            video.load();
+            video.play().catch(function(e) { console.warn('Play after Dolby toggle:', e); });
+
+            // Visual feedback
+            if (dolbyBox) {
+                if (dolbyMode) {
+                    dolbyBox.classList.add('active');
+                } else {
+                    dolbyBox.classList.remove('active');
+                }
+            }
+
+            if (dolbyMode) {
+                toast('🔊 ' + getDolbyCodecLabel() + ' — Passthrough ON', 'success');
+            } else {
+                toast('🔇 Dolby Passthrough OFF — Stereo AAC', 'info');
+            }
+        }
+
+        if (dolbyToggle) dolbyToggle.addEventListener('change', toggleDolby);
+
+        // ── PLAY / PAUSE ──
+        function togglePlay() {
+            if (video.paused || video.ended) {
+                video.play().catch(function(e) { console.warn('Play blocked:', e); });
+            } else {
+                video.pause();
+            }
+        }
+
+        function syncPlayUI() {
+            const isPlaying = !video.paused && !video.ended;
+            const svg = isPlaying ? SVG.pause : SVG.play;
+            if (centerIcon) centerIcon.innerHTML = svg;
+            if (playIcon) playIcon.innerHTML = svg;
+            if (btnPlay) btnPlay.title = isPlaying ? 'Pause (Space)' : 'Play (Space)';
+        }
+
+        video.addEventListener('play', function() {
+            syncPlayUI();
+            flash(SVG.pause);
+            resetIdleTimer();
+        });
+        video.addEventListener('pause', function() {
+            syncPlayUI();
+            flash(SVG.play);
+            showControls();
+        });
+        video.addEventListener('ended', syncPlayUI);
+
+        if (centerPlay) centerPlay.addEventListener('click', togglePlay);
+        if (btnPlay) btnPlay.addEventListener('click', togglePlay);
+        video.addEventListener('click', togglePlay);
+
+        // ── SKIP ──
+        function skip(sec) {
+            if (isTranscoded) {
+                var cur = video.currentTime + startOffset;
+                var target = Math.max(0, Math.min(totalDuration, cur + sec));
+                seekTranscoded(target);
+            } else {
+                video.currentTime = Math.max(0, Math.min(video.duration || 0, video.currentTime + sec));
+            }
+            flash(sec > 0 ? SVG.ffwd : SVG.rewind);
+        }
+
+        if (skipBack) skipBack.addEventListener('click', function() { skip(-10); });
+        if (skipFwd) skipFwd.addEventListener('click', function() { skip(10); });
+
+        // ── TRANSCODED SEEK ──
+        function seekTranscoded(seconds) {
+            toast('Seeking to ' + fmt(seconds) + '...', 'info');
+            video.pause();
+
+            var url = new URL(window.location);
+            url.searchParams.set('start', Math.round(seconds));
+            window.history.replaceState({}, '', url);
+
+            startOffset = seconds;
+            var src = video.querySelector('source');
+            if (src) {
+                src.src = buildStreamSrc(dolbyMode);
+            }
+            video.load();
+            video.play().catch(function(e) { console.warn('Play after seek failed:', e); });
+        }
+
+        // ── TIMELINE ──
+        function syncTimeline() {
+            var cur = isTranscoded ? (video.currentTime + startOffset) : video.currentTime;
+            var dur = isTranscoded ? totalDuration : video.duration;
+            if (!dur || isNaN(dur) || dur <= 0) return;
+
+            var pct = (cur / dur) * 100;
+            if (progress) progress.style.width = pct + '%';
+            if (handle) handle.style.left = pct + '%';
+            if (timeDisp) timeDisp.textContent = fmt(cur) + ' / -' + fmt(Math.max(0, dur - cur));
+
+            if (video.buffered.length > 0) {
+                var bufEnd = video.buffered.end(video.buffered.length - 1);
+                var bufVal = isTranscoded ? (bufEnd + startOffset) : bufEnd;
+                if (buffer) buffer.style.width = ((bufVal / dur) * 100) + '%';
+            }
+        }
+
+        function scrub(e) {
+            var dur = isTranscoded ? totalDuration : video.duration;
+            if (!dur || isNaN(dur) || dur <= 0) return;
+            var rect = timeline.getBoundingClientRect();
+            var clientX = e.clientX;
+            if (e.touches && e.touches.length > 0) {
+                clientX = e.touches[0].clientX;
+            } else if (e.changedTouches && e.changedTouches.length > 0) {
+                clientX = e.changedTouches[0].clientX;
+            }
+            var pct = Math.max(0, Math.min(1, (clientX - rect.left) / rect.width));
+            if (isTranscoded) {
+                seekTranscoded(pct * dur);
+            } else {
+                video.currentTime = pct * dur;
+            }
+        }
+
+        if (timeline) {
+            timeline.addEventListener('mousedown', function(e) {
+                isDragging = true;
+                scrub(e);
+            });
+            timeline.addEventListener('touchstart', function(e) {
+                isDragging = true;
+                scrub(e);
+                e.preventDefault();
+            }, { passive: false });
+        }
+        document.addEventListener('mousemove', function(e) {
+            if (isDragging) scrub(e);
+        });
+        document.addEventListener('touchmove', function(e) {
+            if (isDragging) {
+                scrub(e);
+                e.preventDefault();
+            }
+        }, { passive: false });
+        document.addEventListener('mouseup', function() { isDragging = false; });
+        document.addEventListener('touchend', function() { isDragging = false; });
+
+        video.addEventListener('timeupdate', syncTimeline);
+        video.addEventListener('progress', syncTimeline);
+
+        // ── VOLUME ──
+        function syncVolume() {
+            if (!volSlider) return;
+            video.volume = parseFloat(volSlider.value);
+            video.muted = video.volume === 0;
+
+            if (!volIcon) return;
+            if (video.muted || video.volume === 0) {
+                volIcon.innerHTML = SVG.volMute;
+                if (btnMute) btnMute.title = 'Unmute (M)';
+            } else if (video.volume < 0.5) {
+                volIcon.innerHTML = SVG.volLow;
+                if (btnMute) btnMute.title = 'Mute (M)';
+            } else {
+                volIcon.innerHTML = SVG.volMax;
+                if (btnMute) btnMute.title = 'Mute (M)';
+            }
+        }
+
+        function toggleMute() {
+            if (!volSlider) return;
+            if (video.volume > 0) {
+                savedVolume = video.volume;
+                volSlider.value = 0;
+            } else {
+                volSlider.value = savedVolume || 1;
+            }
+            syncVolume();
+        }
+
+        if (volSlider) {
+            video.volume = parseFloat(volSlider.value);
+            volSlider.addEventListener('input', syncVolume);
+        }
+        if (btnMute) btnMute.addEventListener('click', toggleMute);
+
+        // ── SPEED ──
+        if (speedSel) {
+            speedSel.addEventListener('change', function() {
+                video.playbackRate = parseFloat(speedSel.value);
+                toast('Speed: ' + video.playbackRate + 'x', 'info');
+            });
+        }
+
+        // ── FULLSCREEN & PSEUDO-FULLSCREEN TOGGLE ──
+        var pseudoFsActive = false;
+
+        function enterFS() {
+            var promise = player.requestFullscreen ? player.requestFullscreen() : null;
+            if (promise && promise.catch) {
+                promise.catch(function(e) {
+                    console.warn('Native FS blocked, entering pseudo-fullscreen fallback:', e);
+                    enablePseudoFS();
+                });
+            } else {
+                try {
+                    // Try prefixed standard fallbacks for older devices
+                    if (player.requestFullscreen) {
+                        player.requestFullscreen();
+                    } else if (player.webkitRequestFullscreen) {
+                        player.webkitRequestFullscreen();
+                    } else if (player.mozRequestFullScreen) {
+                        player.mozRequestFullScreen();
+                    } else if (player.msRequestFullscreen) {
+                        player.msRequestFullscreen();
+                    } else {
+                        enablePseudoFS();
+                    }
+                } catch (e) {
+                    enablePseudoFS();
+                }
+            }
+        }
+
+        function enablePseudoFS() {
+            player.classList.add('cn-pseudo-fullscreen');
+            pseudoFsActive = true;
+            syncFSIcon(true);
+            toast('Theater Mode Fullscreen Active', 'info');
+        }
+
+        function exitFS() {
+            var nativeExitDone = false;
+            if (document.fullscreenElement || document.webkitFullscreenElement || document.mozFullScreenElement || document.msFullscreenElement) {
+                try {
+                    if (document.exitFullscreen) {
+                        document.exitFullscreen();
+                        nativeExitDone = true;
+                    } else if (document.webkitExitFullscreen) {
+                        document.webkitExitFullscreen();
+                        nativeExitDone = true;
+                    } else if (document.mozCancelFullScreen) {
+                        document.mozCancelFullScreen();
+                        nativeExitDone = true;
+                    } else if (document.msExitFullscreen) {
+                        document.msExitFullscreen();
+                        nativeExitDone = true;
+                    }
+                } catch (e) {
+                    console.warn('Native exit FS failed:', e);
+                }
+            }
+            if (pseudoFsActive || !nativeExitDone) {
+                player.classList.remove('cn-pseudo-fullscreen');
+                pseudoFsActive = false;
+                syncFSIcon(false);
+                toast('Exited Fullscreen', 'info');
+            }
+        }
+
+        function toggleFS() {
+            var isFS = !!(document.fullscreenElement || document.webkitFullscreenElement || document.mozFullScreenElement || document.msFullscreenElement || pseudoFsActive);
+            if (!isFS) {
+                enterFS();
+            } else {
+                exitFS();
+            }
+        }
+
+        function syncFSIcon(isFS) {
+            if (!fsIcon) return;
+            fsIcon.innerHTML = isFS ? SVG.fsExit : SVG.fsEnter;
+            if (btnFS) btnFS.title = isFS ? 'Exit Fullscreen (F)' : 'Fullscreen (F)';
+        }
+
+        var fsEvents = ['fullscreenchange', 'webkitfullscreenchange', 'mozfullscreenchange', 'MSFullscreenChange'];
+        for (var i = 0; i < fsEvents.length; i++) {
+            document.addEventListener(fsEvents[i], function() {
+                var isNativeFS = !!(document.fullscreenElement || document.webkitFullscreenElement || document.mozFullScreenElement || document.msFullscreenElement);
+                if (isNativeFS) {
+                    player.classList.remove('cn-pseudo-fullscreen');
+                    pseudoFsActive = false;
+                    syncFSIcon(true);
+                } else if (!pseudoFsActive) {
+                    syncFSIcon(false);
+                }
+            });
+        }
+
+        if (btnFS) btnFS.addEventListener('click', toggleFS);
+        video.addEventListener('dblclick', toggleFS);
+
+        // ── IDLE / AUTO-HIDE ──
+        function showControls() {
+            player.classList.remove('is-idle');
+            resetIdleTimer();
+        }
+
+        function hideControls() {
+            if (!video.paused && !isDragging && document.activeElement !== speedSel) {
+                player.classList.add('is-idle');
+            }
+        }
+
+        function resetIdleTimer() {
+            clearTimeout(controlsTimer);
+            controlsTimer = setTimeout(hideControls, 3000);
+        }
+
+        player.addEventListener('mousemove', showControls);
+        player.addEventListener('click', showControls);
+        document.addEventListener('keydown', showControls);
+
+        // ── KEYBOARD ──
+        document.addEventListener('keydown', function(e) {
+            if (e.target.tagName === 'INPUT' || e.target.tagName === 'SELECT') return;
+
+            switch (e.key) {
+                case ' ':
+                case 'Spacebar':
+                    e.preventDefault();
+                    togglePlay();
+                    break;
+                case 'ArrowLeft':
+                    e.preventDefault();
+                    skip(-10);
+                    break;
+                case 'ArrowRight':
+                    e.preventDefault();
+                    skip(10);
+                    break;
+                case 'ArrowUp':
+                    e.preventDefault();
+                    if (volSlider) {
+                        volSlider.value = Math.min(1, parseFloat(volSlider.value) + 0.05);
+                        syncVolume();
+                        flash(SVG.volMax);
+                    }
+                    break;
+                case 'ArrowDown':
+                    e.preventDefault();
+                    if (volSlider) {
+                        volSlider.value = Math.max(0, parseFloat(volSlider.value) - 0.05);
+                        syncVolume();
+                        flash(SVG.volMute);
+                    }
+                    break;
+                case 'm': case 'M':
+                    toggleMute();
+                    break;
+                case 'f': case 'F':
+                    toggleFS();
+                    break;
+                case 'c': case 'C':
+                    e.preventDefault();
+                    togglePopover();
+                    break;
+            }
+        });
+
+        // ── AUDIO & SUBTITLE POPOVER ──
+        function togglePopover() {
+            if (popover) popover.classList.toggle('open');
+        }
+
+        if (popBtn) {
+            popBtn.addEventListener('click', function(e) {
+                e.stopPropagation();
+                togglePopover();
+            });
+        }
+
+        document.addEventListener('click', function(e) {
+            if (popover && popover.classList.contains('open') && !popover.contains(e.target) && e.target !== popBtn) {
+                popover.classList.remove('open');
+            }
+        });
+
+        // Subtitle SRT → VTT converter
+        function srtToVtt(txt) {
+            var vtt = 'WEBVTT\n\n';
+            txt = txt.replace(/\r\n/g, '\n').replace(/\r/g, '\n');
+            var blocks = txt.split('\n\n');
+            for (var i = 0; i < blocks.length; i++) {
+                var block = blocks[i].trim();
+                if (!block) continue;
+                var lines = block.split('\n');
+                var timeIdx = -1;
+                for (var j = 0; j < lines.length; j++) {
+                    if (lines[j].indexOf('-->') !== -1) { timeIdx = j; break; }
+                }
+                if (timeIdx !== -1) {
+                    var ts = lines[timeIdx].replace(/,/g, '.');
+                    var text = lines.slice(timeIdx + 1).join('\n');
+                    vtt += ts + '\n' + text + '\n\n';
+                }
+            }
+            return vtt;
+        }
+
+        // External subtitle upload
+        if (subFile) {
+            subFile.addEventListener('change', function() {
+                var file = subFile.files[0];
+                if (!file) return;
+
+                var reader = new FileReader();
+                reader.onload = function(ev) {
+                    var content = ev.target.result;
+                    var label = file.name.substring(0, 28);
+                    var vtt = file.name.endsWith('.srt') ? srtToVtt(content) : content;
+                    var blob = new Blob([vtt], { type: 'text/vtt' });
+                    var url = URL.createObjectURL(blob);
+
+                    var track = document.createElement('track');
+                    track.kind = 'subtitles';
+                    track.label = label;
+                    track.srclang = 'ext';
+                    track.src = url;
+                    video.appendChild(track);
+
+                    var idx = video.textTracks.length - 1;
+                    var btn = document.createElement('button');
+                    btn.className = 'cn-pop-item';
+                    btn.textContent = label;
+                    btn.dataset.idx = idx;
+
+                    btn.addEventListener('click', function() {
+                        for (var k = 0; k < video.textTracks.length; k++) video.textTracks[k].mode = 'disabled';
+                        video.textTracks[idx].mode = 'showing';
+                        [].forEach.call(subList.querySelectorAll('.cn-pop-item'), function(b) { b.classList.remove('active'); });
+                        btn.classList.add('active');
+                        toast('Subtitles: ' + label, 'info');
+                    });
+
+                    if (subList) {
+                        subList.appendChild(btn);
+                        btn.click();
+                    }
+                };
+                reader.readAsText(file);
+                subFile.value = '';
+            });
+        }
+
+        // Subtitle Off button
+        var offBtn = subList ? subList.querySelector('[data-idx="-1"]') : null;
+        if (offBtn) {
+            offBtn.addEventListener('click', function() {
+                for (var i = 0; i < video.textTracks.length; i++) video.textTracks[i].mode = 'disabled';
+                [].forEach.call(subList.querySelectorAll('.cn-pop-item'), function(b) { b.classList.remove('active'); });
+                offBtn.classList.add('active');
+                toast('Subtitles: Off', 'info');
+            });
+        }
+
+        // Populate native tracks on metadata load
+        video.addEventListener('loadedmetadata', function() {
+            setTimeout(populateTracks, 500);
+        });
+
+        function populateTracks() {
+            // Subtitles
+            if (subList) {
+                [].forEach.call(subList.querySelectorAll('.cn-pop-item:not([data-idx="-1"])'), function(b) { b.remove(); });
+                for (var i = 0; i < video.textTracks.length; i++) {
+                    var t = video.textTracks[i];
+                    if (t.srclang === 'ext') continue;
+                    var btn = document.createElement('button');
+                    btn.className = 'cn-pop-item' + (t.mode === 'showing' ? ' active' : '');
+                    btn.textContent = t.label || 'Track ' + (i + 1) + ' (' + (t.language || 'unknown') + ')';
+                    btn.dataset.idx = i;
+                    (function(idx, track, b) {
+                        b.addEventListener('click', function() {
+                            for (var j = 0; j < video.textTracks.length; j++) video.textTracks[j].mode = 'disabled';
+                            track.mode = 'showing';
+                            [].forEach.call(subList.querySelectorAll('.cn-pop-item'), function(x) { x.classList.remove('active'); });
+                            b.classList.add('active');
+                            toast('Subtitles: ' + b.textContent, 'info');
+                        });
+                    })(i, t, btn);
+                    subList.appendChild(btn);
+                }
+            }
+
+            // Audio tracks — populated from server-side ffprobe data, with click-to-switch
+            if (audioList) {
+                var audioButtons = audioList.querySelectorAll('.cn-pop-item[data-atrack]');
+                [].forEach.call(audioButtons, function(btn) {
+                    btn.addEventListener('click', function() {
+                        var trackIdx = parseInt(btn.dataset.atrack, 10);
+                        if (trackIdx === currentAudioTrack) return; // Already selected
+
+                        currentAudioTrack = trackIdx;
+
+                        // Save position and reload stream with new audio track
+                        var currentPos = isTranscoded ? (video.currentTime + startOffset) : video.currentTime;
+                        if (currentPos > 0) startOffset = currentPos;
+
+                        var src = video.querySelector('source');
+                        if (src) {
+                            src.src = buildStreamSrc(dolbyMode);
+                        }
+                        video.load();
+                        video.play().catch(function(e) { console.warn('Play after audio switch:', e); });
+
+                        // Update active state
+                        [].forEach.call(audioList.querySelectorAll('.cn-pop-item'), function(x) { x.classList.remove('active'); });
+                        btn.classList.add('active');
+
+                        toast('🔊 Audio: ' + btn.textContent, 'success');
+                    });
+                });
+            }
+        }
+
+        // Bind audio track handlers immediately (buttons are server-rendered)
+        populateTracks();
+
+        // ── EXTERNAL PLAYER MODAL ──
+        var movieStreamUrl = window.location.origin + '/movies/{{ movie_path_encoded }}?token={{ stream_token }}';
+
+        function showExtModal() {
+            if (popover) popover.classList.remove('open');
+            if (streamUrl) streamUrl.value = movieStreamUrl;
+            if (extModal) extModal.classList.add('open');
+        }
+        function closeExtModal() {
+            if (extModal) extModal.classList.remove('open');
+        }
+
+        if (extOpen) extOpen.addEventListener('click', showExtModal);
+        if (extClose) extClose.addEventListener('click', closeExtModal);
+        if (extModal) {
+            extModal.addEventListener('click', function(e) {
+                if (e.target === extModal) closeExtModal();
+            });
+        }
+        if (copyUrl) {
+            copyUrl.addEventListener('click', function() {
+                if (streamUrl) streamUrl.select();
+                copyToClipboard(movieStreamUrl).then(function() {
+                    copyUrl.textContent = 'Copied!';
+                    toast('Stream URL copied!', 'success');
+                    setTimeout(function() { copyUrl.textContent = 'Copy'; }, 2000);
+                }).catch(function() {
+                    toast('Copy failed. Please copy manually.', 'error');
+                });
+            });
+        }
+
+        // ── LOADING STATE ──
+        video.addEventListener('waiting', function() {
+            if (loading) loading.classList.add('show');
+        });
+        video.addEventListener('canplay', function() {
+            if (loading) loading.classList.remove('show');
+        });
+        video.addEventListener('playing', function() {
+            if (loading) loading.classList.remove('show');
+        });
+
+        // ── CLEAN UP ON EXIT ──
+        function cleanup() {
+            video.pause();
+            video.src = '';
+            video.load();
+        }
+        if (btnBack) btnBack.addEventListener('click', cleanup);
+        window.addEventListener('beforeunload', cleanup);
+
+        // ── REMOTE CONTROL (SSE) ──
+        var roomCode = localStorage.getItem('cn_room_code');
+        if (!roomCode) {
+            roomCode = String(Math.floor(1000 + Math.random() * 9000));
+            localStorage.setItem('cn_room_code', roomCode);
+        }
+
+        // Insert remote badge in top bar
+        var topBar = document.querySelector('.cn-topbar');
+        if (topBar) {
+            var badge = document.createElement('div');
+            badge.className = 'cn-remote-badge';
+            badge.title = 'Remote Control Setup:\n1. Click to copy remote URL.\n2. Open link on your phone/tablet.\n3. Control playback, volume, tracks & subtitles remotely.\n\nCode: ' + roomCode;
+            badge.innerHTML = '<span class="cn-badge" style="background:linear-gradient(135deg,#d4af37,#f3e5ab);color:#000;">REMOTE</span>' +
+                '<span class="cn-remote-code">Code: <strong>' + roomCode + '</strong></span>';
+            badge.addEventListener('click', function() {
+                var url = window.location.origin + '/remote?code=' + roomCode;
+                copyToClipboard(url).then(function() {
+                    toast('Remote URL Copied! Open on your phone to pair.', 'success');
+                }).catch(function() {
+                    toast('Copy failed. Remote URL: ' + url, 'error');
+                });
+            });
+            topBar.appendChild(badge);
+        }
+
+        // SSE connection
+        var sse = new EventSource('/api/player/stream/' + roomCode);
+        sse.onmessage = function(event) {
+            var data = event.data;
+            if (data === 'ping') return;
+
+            var command = data;
+            var value = null;
+            var colonIdx = data.indexOf(':');
+            if (colonIdx !== -1) {
+                command = data.substring(0, colonIdx);
+                value = data.substring(colonIdx + 1);
+            }
+
+            switch (command) {
+                case 'toggle_play':    togglePlay(); break;
+                case 'skip_forward':   skip(10); break;
+                case 'skip_back':      skip(-10); break;
+                case 'seek':
+                    var seekSec = parseFloat(value);
+                    if (!isNaN(seekSec) && isFinite(seekSec) && seekSec >= 0) {
+                        video.currentTime = isTranscoded ? Math.max(0, seekSec - startOffset) : seekSec;
+                        reportStatus(true);
+                        flash('⏩');
+                    }
+                    break;
+                case 'toggle_mute':    toggleMute(); break;
+                case 'set_volume':
+                    if (value !== null && volSlider) {
+                        volSlider.value = parseFloat(value);
+                        syncVolume();
+                    }
+                    break;
+                case 'toggle_fullscreen': toggleFS(); break;
+                case 'toggle_hdr':
+                    if (hdrToggle) {
+                        hdrToggle.checked = !hdrToggle.checked;
+                        syncHDR();
+                        toast(hdrToggle.checked ? 'HDR Boost: ON' : 'HDR Boost: OFF', 'info');
+                    }
+                    break;
+                case 'toggle_dolby':
+                    if (dolbyToggle) {
+                        dolbyToggle.checked = !dolbyToggle.checked;
+                        toggleDolby();
+                    }
+                    break;
+                case 'toggle_subtitles':
+                    var activeIdx = -1;
+                    for (var i = 0; i < video.textTracks.length; i++) {
+                        if (video.textTracks[i].mode === 'showing') { activeIdx = i; break; }
+                    }
+                    for (var j = 0; j < video.textTracks.length; j++) video.textTracks[j].mode = 'disabled';
+                    if (activeIdx === -1 && video.textTracks.length > 0) {
+                        video.textTracks[0].mode = 'showing';
+                        toast('Subtitles: ' + (video.textTracks[0].label || 'Track 1'), 'info');
+                    } else if (activeIdx !== -1 && activeIdx < video.textTracks.length - 1) {
+                        video.textTracks[activeIdx + 1].mode = 'showing';
+                        toast('Subtitles: ' + (video.textTracks[activeIdx + 1].label || 'Track ' + (activeIdx + 2)), 'info');
+                    } else {
+                        toast('Subtitles: Off', 'info');
+                    }
+                    break;
+                case 'toggle_audio':
+                    if (audioList) {
+                        var audioButtons = audioList.querySelectorAll('.cn-pop-item[data-atrack]');
+                        if (audioButtons.length > 1) {
+                            var nextIdx = 0;
+                            for (var idx = 0; idx < audioButtons.length; idx++) {
+                                if (audioButtons[idx].classList.contains('active')) {
+                                    nextIdx = (idx + 1) % audioButtons.length;
+                                    break;
+                                }
+                            }
+                            audioButtons[nextIdx].click();
+                        } else {
+                            toast('Only one audio track available', 'info');
+                        }
+                    }
+                    break;
+                case 'set_speed':
+                    if (value !== null && speedSel) {
+                        speedSel.value = value;
+                        speedSel.dispatchEvent(new Event('change'));
+                    } else if (speedSel) {
+                        var speeds = ['0.5', '0.75', '1', '1.25', '1.5', '2'];
+                        var curIdx = speeds.indexOf(speedSel.value);
+                        var nextIdx = (curIdx + 1) % speeds.length;
+                        speedSel.value = speeds[nextIdx];
+                        speedSel.dispatchEvent(new Event('change'));
+                    }
+                    break;
+                case 'back':
+                    cleanup();
+                    window.location.href = '/theater';
+                    break;
+                case 'play_movie':
+                    if (value) {
+                        cleanup();
+                        window.location.href = '/player/' + encodeURIComponent(value);
+                    }
+                    break;
+                case 'route_audio':
+                    if (value === 'remote') {
+                        video.muted = true;
+                        if (volIcon) volIcon.innerHTML = SVG.volMute;
+                        toast('Audio routed to remote device', 'info');
+                    } else {
+                        video.muted = false;
+                        if (volIcon) {
+                            if (video.volume < 0.5) volIcon.innerHTML = SVG.volLow;
+                            else volIcon.innerHTML = SVG.volMax;
+                        }
+                        toast('Audio routed to TV/Projector speaker', 'info');
+                    }
+                    reportStatus(true);
+                    break;
+                case 'get_status':
+                    reportStatus(true);
+                    break;
+            }
+        };
+
+        var lastStatusTime = 0;
+        function reportStatus(force) {
+            var now = Date.now();
+            if (!force && now - lastStatusTime < 1500) return;
+            lastStatusTime = now;
+
+            if (!roomCode) return;
+
+            var isPlaying = !video.paused;
+            var currentTime = isTranscoded ? (video.currentTime + startOffset) : video.currentTime;
+            var duration = isTranscoded ? totalDuration : (video.duration || 0);
+            var speed = video.playbackRate || 1.0;
+            var statusPayload = '{{ movie_path_encoded }}' + '|' + '{{ stream_token }}' + '|' + isPlaying + '|' + currentTime + '|' + duration + '|' + speed + '|' + encodeURIComponent(playerName);
+
+            fetch('/api/player/command/' + roomCode, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ command: 'player_status', value: statusPayload })
+            }).catch(function(err) {
+                console.warn("Failed to report player status:", err);
+            });
+        }
+
+        video.addEventListener('play', function() { reportStatus(true); });
+        video.addEventListener('pause', function() { reportStatus(true); });
+        video.addEventListener('seeked', function() { reportStatus(true); });
+        video.addEventListener('loadedmetadata', function() { reportStatus(true); });
+        video.addEventListener('ratechange', function() { reportStatus(true); });
+        video.addEventListener('timeupdate', function() { reportStatus(false); });
+
+        // Initial status broadcast on load
+        setTimeout(function() { reportStatus(true); }, 1000);
+
+        // ── ERROR HANDLING ──
+        video.addEventListener('error', function() {
+            var err = video.error;
+            var msg = 'Playback error';
+            if (err) {
+                switch (err.code) {
+                    case 1: msg = 'Playback aborted.'; break;
+                    case 2: msg = 'Network error during playback.'; break;
+                    case 3: msg = 'Video decoding failed. Format may not be supported natively.'; break;
+                    case 4: msg = 'Video source not supported by this browser.'; break;
+                }
+            }
+            toast(msg, 'error');
+        });
+
+    })();
+    </script>
+</body>
+</html>

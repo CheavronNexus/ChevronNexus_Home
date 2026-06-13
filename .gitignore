@@ -1,0 +1,28 @@
+# Byte-compiled / optimized / DLL files
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Local Database
+*.db
+*.sqlite
+
+# Media uploads and Movie library directories (Do NOT commit heavy files to GitHub!)
+uploads/
+Movie/
+temp/
+
+# Environment configurations and logs
+*.log
+.env
+.venv/
+env/
+venv/
+ENV/
+
+# System-specific files
+Thumbs.db
+Desktop.ini
+.DS_Store
+.idea/
+.vscode/
